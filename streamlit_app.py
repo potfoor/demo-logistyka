@@ -52,64 +52,62 @@ st.markdown("""
     <style>
     .tag-container { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px 0; }
     .tag { padding: 3px 8px; border-radius: 3px; font-size: 9px; color: white; font-weight: bold; text-transform: uppercase; }
-    div[data-testid="stPopover"] > button { margin-top: 28px; width: 100%; border: 1px solid #d1d5db; }
+    .stButton > button { width: 100%; }
+    /* Fix dla popovera, żeby nie rozpychał kolumny */
+    div[data-testid="stPopover"] > button { margin-top: 28px; }
     </style>
 """, unsafe_allow_html=True)
 
-# 5. PANEL BOCZNY (Drzewko - uproszczone do list, by uniknąć błędów)
+# 5. PANEL BOCZNY
 with st.sidebar:
     st.title("Panel Sterowania")
-    sac.tree(
+    menu_selection = sac.tree(
         items=[
-            {'label': 'Zamówienia', 'icon': 'box', 'children': [
-                {'label': 'Powiadomienia', 'icon': 'bell'},
-                {'label': 'Ticket', 'icon': 'ticket-perforated'},
-            ]},
-        ], label='NAWIGACJA', open_all=True
+            sac.TreeItem('Zamówienia', icon='box', children=[
+                sac.TreeItem('Powiadomienia', icon='bell', children=[sac.TreeItem('Aktywne')]),
+                sac.TreeItem('Ticket', icon='ticket-perforated', children=[
+                    sac.TreeItem('Moje Dostawy'), sac.TreeItem('Wszystkie Dostawy'),
+                    sac.TreeItem('Odprawa Celna'), sac.TreeItem('Problemy Dostaw')
+                ]),
+                sac.TreeItem('Awizacja', icon='calendar-event', children=[sac.TreeItem('Kalendarz')]),
+            ]),
+        ], label='NAWIGACJA', open_all=True, size='sm'
     )
 
-# 6. WYSZUKIWANIE
+# --- SEKCJA WYSZUKIWANIA ---
 st.header("🔍 Wyszukiwanie")
 
 with st.container(border=True):
+    # Rząd 1: Główne filtry
     c1, c2, c3 = st.columns([3, 1, 3])
-    
     with c1:
-        # ROZWIĄZANIE PROBLEMU: Standardowy selectbox z dodanymi ikonami (emoji)
-        opcje_dostawcow = ["Wszyscy"] + [f"📇 {d['firma']}" for d in dostawcy_base]
-        wybrany_element = st.selectbox("Dostawca:", opcje_dostawcow)
-        
-        # Oczyszczamy nazwę z ikony do logiki filtrów
-        dostawca_sel = wybrany_element.replace("📇 ", "") if wybrany_element != "Wszyscy" else "Wszyscy"
-    
+        dostawca_sel = st.selectbox("Dostawca:", ["Wszyscy"] + [d["firma"] for d in dostawcy_base])
     with c2:
-        # KARTA DOSTAWCY
         with st.popover("📇 Karta"):
             if dostawca_sel != "Wszyscy":
-                st.subheader(f"Dane: {dostawca_sel}")
-                st.text_input("Kontakt:", "Jan Kowalski")
-                st.text_input("B2B URL:", "https://system.b2b.pl")
-                st.text_input("Hasło:", type="password", value="demo123")
+                st.write(f"**{dostawca_sel}**")
+                st.text_input("Kontakt:", "Jan Nowak")
+                st.text_input("B2B URL:", "https://b2b.link.pl")
+                st.text_input("Login:", "admin")
                 st.button("Zapisz")
-            else:
-                st.info("Wybierz firmę")
-
+            else: st.info("Wybierz dostawcę")
     with c3:
         odp_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()))
 
+    # Rząd 2: Dodatkowe parametry i Statusy
     c4, c5, c6 = st.columns([3, 2, 2])
     with c4:
-        st.text_input("Ticket:", placeholder="Nr ticketu...")
+        ticket_input = st.text_input("Ticket:", placeholder="Wpisz nr...")
     with c5:
         st.write("**Statusy:**")
-        st_c1, st_c2 = st.columns(2)
-        st_c1.checkbox("Otwarte", value=True)
-        st_c2.checkbox("Zamknięte")
+        st_col1, st_col2 = st.columns(2)
+        otwarte = st_col1.checkbox("Otwarte", value=True)
+        zamkniete = st_col2.checkbox("Zamknięte")
     with c6:
         st.write("**Akcje:**")
-        st.button("🚀 ZASTOSUJ FILTRY", type="primary")
+        apply_btn = st.button("🚀 ZASTOSUJ FILTRY", type="primary")
 
-# LOGIKA FILTROWANIA
+# LOGIKA FILTRÓW
 dostawcy_filtered = dostawcy_base
 if odp_sel:
     dostawcy_filtered = [d for d in dostawcy_base if d["opiekun"] in odp_sel]
@@ -117,7 +115,6 @@ if dostawca_sel != "Wszyscy":
     dostawcy_filtered = [d for d in dostawcy_filtered if d["firma"] == dostawca_sel]
 
 # 7. TAGI
-st.write(f"**Aktywni Dostawcy ({len(dostawcy_filtered)}):**")
 tags_html = '<div class="tag-container">'
 for d in dostawcy_filtered:
     kolor = osoby_kolory[d["opiekun"]]
@@ -125,23 +122,27 @@ for d in dostawcy_filtered:
 tags_html += '</div>'
 st.markdown(tags_html, unsafe_allow_html=True)
 
-# 8. ZARZĄDZANIE TABELĄ
+# --- ZARZĄDZANIE TABELĄ ---
 st.write("---")
 st.subheader("📊 Zarządzanie Tabelą")
 z1, z2 = st.columns([3, 1])
+
 with z1:
-    wybrane_kolumny = st.multiselect("Kolumny:", ["Lp.", "Dostawca", "Status", "Odpowiedzialny", "Zakupy"], default=["Lp.", "Dostawca", "Status", "Odpowiedzialny"])
+    all_columns = ["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny", "Zakupy", "Data Awizacji"]
+    selected_cols = st.multiselect("Wybierz kolumny:", all_columns, default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny"])
+
 with z2:
-    st.selectbox("Szablony:", ["Standard", "Logistyka"])
-    st.button("💾 Zapisz")
+    st.selectbox("Szablony:", ["Standard", "Logistyka", "Finanse"])
+    st.button("💾 Zapisz Szablon")
 
 # 9. TABELA
 raw_data = []
 for i, d in enumerate(dostawcy_filtered):
     raw_data.append({
-        "Lp.": i + 1, "Dostawca": d["firma"], "Status": "SKŁAD" if i % 2 == 0 else "W DRODZE",
-        "Odpowiedzialny": d["opiekun"], "Zakupy": "OK"
+        "Lp.": i + 1, "Dostawca": d["firma"], "Nr dostawy": f"{i+100}/24",
+        "Status": "SKŁAD" if i % 2 == 0 else "W DRODZE",
+        "Odpowiedzialny": d["opiekun"], "Zakupy": "OK", "Data Awizacji": "2024-03-20"
     })
 
 if raw_data:
-    st.dataframe(pd.DataFrame(raw_data)[wybrane_kolumny], use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(raw_data)[selected_cols], use_container_width=True, hide_index=True)
