@@ -13,7 +13,7 @@ osoby_kolory = {
     "Marek Woźniak": "#0288d1"
 }
 
-# 3. NOWA LISTA FIRM (Normalne firmy)
+# 3. NOWA LISTA FIRM
 lista_firm = [
     "Samsung Electronics", "Toyota Motor Poland", "Coca-Cola HBC", "Microsoft",
     "Nestlé Polska", "Apple Poland", "Grupa Azoty", "Volkswagen Group",
@@ -24,20 +24,18 @@ lista_firm = [
     "Huawei Polska", "Goodyear", "Henkel Polska", "LG Electronics", "Castorama Polska"
 ]
 
-# Automatyczne generowanie bazy z przypisaniem opiekunów
 opiekunowie = list(osoby_kolory.keys())
 dostawcy_base = [
     {"firma": nazwa, "opiekun": opiekunowie[i % len(opiekunowie)]}
     for i, nazwa in enumerate(lista_firm)
 ]
 
-# 4. CSS DLA CZYTELNOŚCI
+# 4. CSS
 st.markdown("""
     <style>
     .tag-container { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px 0; }
     .tag { padding: 3px 8px; border-radius: 3px; font-size: 9px; color: white; font-weight: bold; text-transform: uppercase; }
     .stButton > button { width: 100%; }
-    /* Fix dla popovera, żeby nie rozpychał kolumny */
     div[data-testid="stPopover"] > button { margin-top: 28px; border: 1px solid #d1d5db; height: 38px; }
     </style>
 """, unsafe_allow_html=True)
@@ -58,39 +56,34 @@ with st.sidebar:
         ], label='NAWIGACJA', open_all=True, size='sm'
     )
 
-# --- SEKCJA WYSZUKIWANIA ---
+# 6. WYSZUKIWANIE
 st.header("🔍 Wyszukiwanie")
-
 with st.container(border=True):
-    # Rząd 1: Główne filtry
     c1, c2, c3 = st.columns([3, 1, 3])
     with c1:
         dostawca_sel = st.selectbox("Dostawca:", ["Wszyscy"] + [d["firma"] for d in dostawcy_base])
     with c2:
         with st.popover("📇 Karta"):
             if dostawca_sel != "Wszyscy":
-                st.write(f"**Karta dostawcy: {dostawca_sel}**")
-                st.text_input("Osoba kontaktowa:", "Jan Nowak")
+                st.write(f"**Karta: {dostawca_sel}**")
+                st.text_input("Kontakt:", "Jan Nowak")
                 st.text_input("B2B URL:", f"https://b2b.{dostawca_sel.lower().replace(' ', '')}.pl")
-                st.text_input("Login:", "admin_pl")
-                st.button("💾 Zapisz zmiany")
-            else: 
-                st.info("Wybierz dostawcę")
+                st.button("💾 Zapisz")
+            else: st.info("Wybierz firmę")
     with c3:
         odp_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()))
 
-    # Rząd 2: Dodatkowe parametry i Statusy
     c4, c5, c6 = st.columns([3, 2, 2])
     with c4:
-        ticket_input = st.text_input("Ticket:", placeholder="Wpisz nr ticketu...")
+        st.text_input("Ticket:", placeholder="Nr ticketu...")
     with c5:
         st.write("**Statusy:**")
         st_col1, st_col2 = st.columns(2)
-        otwarte = st_col1.checkbox("Otwarte", value=True)
-        zamkniete = st_col2.checkbox("Zamknięte")
+        st_col1.checkbox("Otwarte", value=True)
+        st_col2.checkbox("Zamknięte")
     with c6:
         st.write("**Akcje:**")
-        apply_btn = st.button("🚀 ZASTOSUJ FILTRY", type="primary")
+        st.button("🚀 ZASTOSUJ FILTRY", type="primary")
 
 # LOGIKA FILTRÓW
 dostawcy_filtered = dostawcy_base
@@ -99,8 +92,7 @@ if odp_sel:
 if dostawca_sel != "Wszyscy":
     dostawcy_filtered = [d for d in dostawcy_filtered if d["firma"] == dostawca_sel]
 
-# 7. TAGI (Pod filtrami)
-st.write(f"**Aktywni Dostawcy ({len(dostawcy_filtered)}):**")
+# 7. TAGI
 tags_html = '<div class="tag-container">'
 for d in dostawcy_filtered:
     kolor = osoby_kolory[d["opiekun"]]
@@ -108,20 +100,17 @@ for d in dostawcy_filtered:
 tags_html += '</div>'
 st.markdown(tags_html, unsafe_allow_html=True)
 
-# --- ZARZĄDZANIE TABELĄ ---
+# 8. ZARZĄDZANIE TABELĄ
 st.write("---")
 st.subheader("📊 Zarządzanie Tabelą")
 z1, z2 = st.columns([3, 1])
-
 with z1:
     all_columns = ["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny", "Zakupy", "Data Awizacji"]
-    selected_cols = st.multiselect("Wybierz kolumny:", all_columns, default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny"])
-
+    selected_cols = st.multiselect("Kolumny:", all_columns, default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny"])
 with z2:
-    st.selectbox("Szablony:", ["Standard", "Logistyka", "Finanse"])
-    st.button("💾 Zapisz Szablon")
+    st.selectbox("Szablony:", ["Standard", "Logistyka"])
 
-# 9. TABELA
+# 9. TABELA Z SZTYWNYMI ODSTĘPAMI
 raw_data = []
 for i, d in enumerate(dostawcy_filtered):
     raw_data.append({
@@ -135,6 +124,20 @@ for i, d in enumerate(dostawcy_filtered):
     })
 
 if raw_data:
-    st.dataframe(pd.DataFrame(raw_data)[selected_cols], use_container_width=True, hide_index=True)
-else:
-    st.warning("Brak wyników dla wybranych kryteriów.")
+    df = pd.DataFrame(raw_data)
+    
+    # KONFIGURACJA SZTYWNYCH SZEROKOŚCI
+    st.dataframe(
+        df[selected_cols],
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Lp.": st.column_config.Column(width="small", help="Numer porządkowy"),
+            "Dostawca": st.column_config.Column(width="large"),
+            "Nr dostawy": st.column_config.Column(width="medium"),
+            "Status": st.column_config.Column(width="small"),
+            "Odpowiedzialny": st.column_config.Column(width="medium"),
+            "Zakupy": st.column_config.Column(width="small"),
+            "Data Awizacji": st.column_config.Column(width="medium"),
+        }
+    )
