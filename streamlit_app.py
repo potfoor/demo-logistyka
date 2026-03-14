@@ -5,7 +5,7 @@ import streamlit_antd_components as sac
 # 1. Konfiguracja strony
 st.set_page_config(layout="wide", page_title="System Zarządzania Dostawami", page_icon="📦")
 
-# 2. CSS dla stylizacji wizualnej (kolory tagów i tabeli)
+# 2. CSS dla estetyki (tagi i sidebar)
 st.markdown("""
     <style>
     .tag-container { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 20px; }
@@ -19,7 +19,6 @@ st.markdown("""
 with st.sidebar:
     st.title("Panel Sterowania")
     
-    # Drzewko menu (zamiast selectboxów)
     menu_selection = sac.tree(
         items=[
             sac.TreeItem('ZAMÓWIENIA', icon='box', children=[
@@ -64,6 +63,15 @@ st.markdown("""
 # 5. FILTRY
 col_left, col_right = st.columns([1, 2])
 
+with col_left:
+    with st.expander("🔍 Filtry - Unikalne", expanded=True):
+        st.text_input("SKU:", key="sku_input")
+        st.checkbox("Pokaż warianty", value=True)
+        f_btns = st.columns(3)
+        f_btns[0].button("FILTRUJ", type="primary", use_container_width=True)
+        f_btns[1].button("ZAKŁADKĘ", use_container_width=True)
+        f_btns[2].button("🔄", use_container_width=True)
+
 with col_right:
     with st.expander("📂 Filtry - Wielowybór", expanded=True):
         f_row1 = st.columns(3)
@@ -77,37 +85,33 @@ with col_right:
         f_row2[2].date_input("Data odcięcia:")
         st.button("USTAWIENIA ZAAWANSOWANE", use_container_width=True)
 
-# --- 6. TABELA DANYCH "MOJE DOSTAWY" ---
+# 6. TABELA DANYCH
 st.subheader(f"MOJE DOSTAWY - Widok: {menu_selection}")
 
-# 1. Dane
+# Dane testowe
 df_data = pd.DataFrame([
-    {"Lp.": 1, "Dostawca": "ASG", "Nr dostawy": "14/23", "Status": "BR", "Zakupy": "Brak danych", "Kolor": "#f8d7da"},
-    {"Lp.": 2, "Dostawca": "BARREL OPTICS", "Nr dostawy": "1/24-sampl", "Status": "Zamówiono", "Zakupy": "Brak danych", "Kolor": "#ffffff"},
-    {"Lp.": 3, "Dostawca": "WYDAWNICTWO X", "Nr dostawy": "7/24", "Status": "SKŁAD", "Zakupy": "W przygotowaniu", "Kolor": "#d4edda"},
-    {"Lp.": 4, "Dostawca": "Darek", "Nr dostawy": "1/24", "Status": "Zrealizowane", "Zakupy": "Brak danych", "Kolor": "#ffffff"},
-    {"Lp.": 5, "Dostawca": "ZIRI", "Nr dostawy": "4/24", "Status": "SKŁAD", "Zakupy": "Gotowy", "Kolor": "#d4edda"},
+    {"Lp.": 1, "Dostawca": "ASG", "Nr dostawy": "14/23", "Status": "BR", "Zakupy": "Brak danych", "Kolor_Hex": "#f8d7da"},
+    {"Lp.": 2, "Dostawca": "BARREL OPTICS", "Nr dostawy": "1/24-sampl", "Status": "Zamówiono", "Zakupy": "Brak danych", "Kolor_Hex": "#ffffff"},
+    {"Lp.": 3, "Dostawca": "WYDAWNICTWO X", "Nr dostawy": "7/24", "Status": "SKŁAD", "Zakupy": "W przygotowaniu", "Kolor_Hex": "#d4edda"},
+    {"Lp.": 4, "Dostawca": "Darek", "Nr dostawy": "1/24", "Status": "Zrealizowane", "Zakupy": "Brak danych", "Kolor_Hex": "#ffffff"},
+    {"Lp.": 5, "Dostawca": "ZIRI", "Nr dostawy": "4/24", "Status": "SKŁAD", "Zakupy": "Gotowy", "Kolor_Hex": "#d4edda"},
 ])
 
-# 2. BEZPIECZNIEJSZA funkcja stylizująca
-def style_row(row):
-    # Używamy .get('Kolor') aby uniknąć błędu jeśli kolumna zostanie usunięta
-    color = row.get('Kolor', '#ffffff') 
-    # Generujemy listę stylów dla wszystkich kolumn w wierszu
-    return ['background-color: ' + color] * len(row)
+# Funkcja stylizująca (używamy Kolor_Hex)
+def apply_row_style(row):
+    return [f"background-color: {row['Kolor_Hex']}" for _ in row]
 
-# 3. Nakładamy style na PEŁNY dataframe (nie usuwamy kolumny Kolor wcześniej!)
-styled_df = df_data.style.apply(style_row, axis=1)
+# Tworzymy stylizowany obiekt
+styled_df = df_data.style.apply(apply_row_style, axis=1)
 
-# 4. Wyświetlamy tabelę, ukrywając kolumnę technologiczną w ustawieniach widoku
+# Wyświetlamy tabelę i UKRYWAMY kolumnę Kolor_Hex
 st.dataframe(
     styled_df,
     use_container_width=True,
     hide_index=True,
     column_config={
-        "Kolor": None  # Ta linijka ukrywa kolumnę z widoku użytkownika
+        "Kolor_Hex": None  # To kluczowe: kolumna nie będzie widoczna dla użytkownika
     }
 )
 
-st.info(f"Podsumowanie: Znaleziono towary dla sekcji {menu_selection}")
-```
+st.info(f"Podsumowanie: Wybrano widok {menu_selection}. System działa w trybie demonstracyjnym.")
