@@ -90,6 +90,7 @@ with col_right:
 # --- 6. TABELA DANYCH "MOJE DOSTAWY" ---
 st.subheader(f"MOJE DOSTAWY - Widok: {menu_selection}")
 
+# 1. Dane
 df_data = pd.DataFrame([
     {"Lp.": 1, "Dostawca": "ASG", "Nr dostawy": "14/23", "Status": "BR", "Zakupy": "Brak danych", "Kolor": "#f8d7da"},
     {"Lp.": 2, "Dostawca": "BARREL OPTICS", "Nr dostawy": "1/24-sampl", "Status": "Zamówiono", "Zakupy": "Brak danych", "Kolor": "#ffffff"},
@@ -98,23 +99,24 @@ df_data = pd.DataFrame([
     {"Lp.": 5, "Dostawca": "ZIRI", "Nr dostawy": "4/24", "Status": "SKŁAD", "Zakupy": "Gotowy", "Kolor": "#d4edda"},
 ])
 
-# Zapisz mapę kolorów PRZED usunięciem kolumny
-color_map = df_data["Kolor"].tolist()
-
-# Usuń kolumnę Kolor z danych do wyświetlenia
-df_display = df_data.drop(columns=["Kolor"])
-
-# Funkcja stylizująca - korzysta z zewnętrznej listy kolorów (closure)
+# 2. BEZPIECZNIEJSZA funkcja stylizująca
 def style_row(row):
-    color = color_map[row.name]  # row.name = indeks wiersza (0, 1, 2...)
-    return [f'background-color: {color}'] * len(row)
+    # Używamy .get('Kolor', '') aby uniknąć błędu, jeśli kolumna zostanie gdzieś usunięta
+    color = row.get('Kolor', '#ffffff') 
+    # Generujemy listę stylów dla wszystkich kolumn w wierszu
+    return ['background-color: ' + color] * len(row)
 
-# Nałóż style na CZYSTY dataframe (bez kolumny Kolor)
-styled_df = df_display.style.apply(style_row, axis=1)
+# 3. Stylizowanie i Ukrywanie kolumny
+styled_df = df_data.style.apply(style_row, axis=1)
 
-# Wyświetl
+# 4. Wyświetlanie tabeli
 st.dataframe(
     styled_df,
     use_container_width=True,
-    hide_index=True
+    hide_index=True,
+    column_config={
+        "Kolor": None  # Ta linijka jest kluczowa - ukrywa kolumnę, ale nie usuwa jej z danych
+    }
 )
+
+st.info(f"Podsumowanie: Znaleziono towary dla sekcji {menu_selection}")
