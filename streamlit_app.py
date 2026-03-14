@@ -89,7 +89,7 @@ with col_right:
 # --- 6. TABELA DANYCH "MOJE DOSTAWY" ---
 st.subheader(f"MOJE DOSTAWY - Widok: {menu_selection}")
 
-# Twoje dane (upewnij się, że są zdefiniowane tylko raz)
+# Twoje dane
 df_data = pd.DataFrame([
     {"Lp.": 1, "Dostawca": "ASG", "Nr dostawy": "14/23", "Status": "BR", "Zakupy": "Brak danych", "Kolor": "#f8d7da"},
     {"Lp.": 2, "Dostawca": "BARREL OPTICS", "Nr dostawy": "1/24-sampl", "Status": "Zamówiono", "Zakupy": "Brak danych", "Kolor": "#ffffff"},
@@ -103,17 +103,17 @@ def style_row(row):
     color = row['Kolor']
     return [f'background-color: {color}' for _ in row]
 
-# KLUCZ: Najpierw nakładamy style na PEŁNY dataframe
+# KROK 1: Nakładamy style na PEŁNY dataframe (z kolumną Kolor)
 styled_df = df_data.style.apply(style_row, axis=1)
 
-# KLUCZ 2: Wyświetlamy, ukrywając kolumnę 'Kolor' w konfiguracji (column_config)
-# ZAMIAST używać .drop()
+# KROK 2: Wyświetlamy, ukrywając kolumnę 'Kolor' w konfiguracji (column_config)
+# UWAGA: Tutaj nie używamy .drop()!
 st.dataframe(
     styled_df,
     use_container_width=True,
     hide_index=True,
     column_config={
-        "Kolor": None  # To sprawia, że kolumna istnieje dla kodu, ale zarząd jej nie widzi
+        "Kolor": None  # To jest kluczowe - kolumna jest w kodzie, ale niewidoczna w przeglądarce
     }
 )
 
