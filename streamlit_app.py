@@ -5,7 +5,7 @@ import streamlit_antd_components as sac
 # 1. Konfiguracja strony
 st.set_page_config(layout="wide", page_title="System Logistyczny - Demo", page_icon="🚚")
 
-# 2. DEFINICJA OSÓB I KOLORÓW (Słownik pomocniczy)
+# 2. DEFINICJA OSÓB I KOLORÓW
 osoby_kolory = {
     "Jan Kowalski": "#333333",      # Ciemny szary
     "Anna Nowak": "#8db600",        # Oliwkowy
@@ -13,7 +13,7 @@ osoby_kolory = {
     "Marek Woźniak": "#0288d1"       # Niebieski
 }
 
-# 3. LISTA DOSTAWCÓW Z PRZYPISANIEM
+# 3. LISTA DOSTAWCÓW (Twoja pełna lista)
 dostawcy_data = [
     {"firma": "Logistics Hub Sp. z o.o.", "opiekun": "Jan Kowalski"},
     {"firma": "Trans-Port Solutions", "opiekun": "Anna Nowak"},
@@ -47,11 +47,12 @@ dostawcy_data = [
     {"firma": "Master-Supply Solutions", "opiekun": "Anna Nowak"}
 ]
 
-# 4. CSS DLA TAGÓW
+# 4. CSS DLA STYLIZACJI
 st.markdown("""
     <style>
     .tag-container { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 20px; }
     .tag { padding: 4px 10px; border-radius: 4px; font-size: 10px; color: white; font-weight: bold; text-transform: uppercase; }
+    .stButton > button { border-radius: 5px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -72,7 +73,7 @@ with st.sidebar:
         label='NAWIGACJA', open_all=True, size='sm'
     )
 
-# 6. GENEROWANIE GÓRNYCH TAGÓW (Z kolorami opiekunów)
+# 6. GENEROWANIE GÓRNYCH TAGÓW (Kolory opiekunów)
 tags_html = '<div class="tag-container">'
 for d in dostawcy_data:
     kolor = osoby_kolory[d["opiekun"]]
@@ -80,7 +81,7 @@ for d in dostawcy_data:
 tags_html += '</div>'
 st.markdown(tags_html, unsafe_allow_html=True)
 
-# 7. SEKCJA WYSZUKIWANIA
+# 7. SEKCJA WYSZUKIWANIA (FILTRY)
 st.subheader("🔍 Wyszukiwanie")
 with st.container(border=True):
     col1, col2, col3, col4 = st.columns(4)
@@ -99,15 +100,32 @@ with st.container(border=True):
         st.write("**Akcje Szybkie:**")
         st.button("➕ Dodaj Dostawcę", use_container_width=True)
         st.button("🚛 Dodaj Przewoźnika", use_container_width=True)
+        st.button("🔁 Zamówienia Cykliczne", use_container_width=True)
 
-# 8. ZARZĄDZANIE TABELĄ
+# 8. PRZYWRÓCONA SEKCJA: ZARZĄDZANIE TABELĄ
 st.write("---")
-all_columns = ["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny", "Zakupy"]
-selected_cols = st.multiselect("Wybierz kolumny tabeli:", all_columns, default=all_columns)
+st.subheader("📊 Zarządzanie Tabelą")
 
-# 9. DANE DO TABELI (Generowane na podstawie listy dostawców)
+col_manage1, col_manage2 = st.columns([2, 1])
+
+with col_manage1:
+    all_columns = ["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny", "Zakupy", "Data Awizacji", "Priorytet"]
+    # Mechanizm wyboru kolumn
+    selected_cols = st.multiselect("Wybierz kolumny tabeli:", all_columns, default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny"])
+    if st.button("✅ Zastosuj", type="primary"):
+        st.toast("Widok tabeli został zaktualizowany!")
+
+with col_manage2:
+    # Szablony i przyciski akcji
+    st.selectbox("Szablony widoku:", ["Standardowy", "Dla Magazynu", "Finansowy", "Moje ulubione"])
+    c_btn1, c_btn2 = st.columns(2)
+    c_btn1.button("💾 Zapisz", use_container_width=True)
+    c_btn2.button("↕️ Kolejność", use_container_width=True)
+
+# 9. TABELA DANYCH
+st.write("---")
 raw_table_data = []
-for i, d in enumerate(dostawcy_data[:10]): # Pokazujemy pierwsze 10 dla przejrzystości demo
+for i, d in enumerate(dostawcy_data):
     raw_table_data.append({
         "Lp.": i + 1,
         "Dostawca": d["firma"],
@@ -115,21 +133,24 @@ for i, d in enumerate(dostawcy_data[:10]): # Pokazujemy pierwsze 10 dla przejrzy
         "Status": "SKŁAD" if i % 2 == 0 else "W DRODZE",
         "Odpowiedzialny": d["opiekun"],
         "Zakupy": "Gotowy",
-        "color": osoby_kolory[d["opiekun"]] # Kolor wiersza taki sam jak tagu
+        "Data Awizacji": "2024-03-20",
+        "Priorytet": "Normalny",
+        "color_hex": osoby_kolory[d["opiekun"]] 
     })
 
 df = pd.DataFrame(raw_table_data)
 
-# Stylizacja wierszy
+# Funkcja stylizująca wiersze na podstawie koloru opiekuna
 def style_row(row):
-    return [f'background-color: {row["color"]}; color: white;' if row["color"] != "#ffffff" else '' for _ in row]
+    color = row["color_hex"]
+    return [f'background-color: {color}; color: white;' for _ in row]
 
+# Wyświetlanie z zachowaniem dynamicznych kolumn
 st.dataframe(
-    df[selected_cols + ["color"]].style.apply(style_row, axis=1),
+    df[selected_cols + ["color_hex"]].style.apply(style_row, axis=1),
     use_container_width=True,
     hide_index=True,
-    column_config={"color": None}
+    column_config={"color_hex": None} # Ukrycie kolumny technicznej
 )
 
-st.info(f"💡 Kolory tagów i wierszy odpowiadają przypisanym osobom: " + 
-        ", ".join([f"{k} ({v})" for k, v in osoby_kolory.items()]))
+st.info(f"Podsumowanie: Widok zawiera towary przypisane do sekcji {menu_selection}")
