@@ -1,91 +1,112 @@
 import streamlit as st
 import pandas as pd
+import streamlit_antd_components as sac
 
-# Konfiguracja strony
-st.set_page_config(layout="wide", page_title="System Zarządzania Dostawami")
+# 1. Konfiguracja strony
+st.set_page_config(layout="wide", page_title="System Zarządzania Dostawami", page_icon="📦")
 
-# --- STYLE CSS (dla kolorowych przycisków i estetyki) ---
+# 2. CSS dla stylizacji wizualnej (kolory tagów i tabeli)
 st.markdown("""
     <style>
-    .stButton>button { width: 100%; border-radius: 5px; }
     .tag-container { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 20px; }
     .tag { padding: 4px 10px; border-radius: 4px; font-size: 12px; color: white; font-weight: bold; }
+    .stDataFrame { border: 1px solid #e6e9ef; border-radius: 5px; }
+    [data-testid="stSidebar"] { background-color: #f0f2f6; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- PASEK BOCZNY (Sidebar) ---
+# 3. PASEK BOCZNY - Drzewko menu
 with st.sidebar:
     st.title("Panel Sterowania")
     
-    # Główne drzewko "Zamówienia"
-    with st.expander("📦 ZAMÓWIENIA", expanded=True):
-        # Podkategorie jako rozwijane listy (tree-style)
-        st.expander("🔔 Powiadomienia", ["Wszystkie", "Aktywne", "Archiwum"], key="sb_pow")
-        st.expander("🎫 Ticket", ["Dodaj produkt", "Zestawy"], key="sb_tick")
-        st.expander("📅 Awizacja", ["Ceny produktów", "Rodzaje cen"], key="sb_awiz")
-    
-    
-# --- GÓRNE TAGI (Zakładki/Kategorie) ---
+    # Drzewko menu (zamiast selectboxów)
+    menu_selection = sac.tree(
+        items=[
+            sac.TreeItem('ZAMÓWIENIA', icon='box', children=[
+                sac.TreeItem('Powiadomienia', icon='bell', children=[
+                    sac.TreeItem('Wszystkie'),
+                    sac.TreeItem('Aktywne'),
+                    sac.TreeItem('Archiwum'),
+                ]),
+                sac.TreeItem('Ticket', icon='ticket-perforated', children=[
+                    sac.TreeItem('Dodaj produkt'),
+                    sac.TreeItem('Zestawy produktów'),
+                ]),
+                sac.TreeItem('Awizacja', icon='calendar-check', children=[
+                    sac.TreeItem('Ceny produktów'),
+                    sac.TreeItem('Rodzaje cen'),
+                ]),
+            ]),
+            sac.TreeItem('IMPORT', icon='cloud-arrow-down', children=[
+                sac.TreeItem('Import Excel'),
+                sac.TreeItem('Kolejka importów'),
+                sac.TreeItem('Historia'),
+            ]),
+        ],
+        label='NAWIGACJA',
+        index=0,
+        open_all=True,
+        size='sm',
+    )
+
+# 4. GÓRNE TAGI (Odwzorowanie kolorowych zakładek ze zdjęcia)
 st.markdown("""
     <div class="tag-container">
-        <span class="tag" style="background-color: #555;">#01 MEDIA</span>
+        <span class="tag" style="background-color: #333;">#01 MEDIA</span>
         <span class="tag" style="background-color: #8db600;">#4F AW'23</span>
         <span class="tag" style="background-color: #8db600;">#4F AW'24</span>
         <span class="tag" style="background-color: #2e7d32;">#4F GR.F</span>
         <span class="tag" style="background-color: #ff5722;">#4SHOOTER</span>
         <span class="tag" style="background-color: #0288d1;">#A ZESTAWY</span>
+        <span class="tag" style="background-color: #0097a7;">#ABISAL</span>
     </div>
 """, unsafe_allow_html=True)
 
-# --- SEKCE FILTRÓW (Expander) ---
-col_f1, col_f2 = st.columns([1, 2])
+# 5. FILTRY (Układ kolumnowy)
+col_left, col_right = st.columns([1, 2])
 
-with col_f1:
+with col_left:
     with st.expander("🔍 Filtry - Unikalne", expanded=True):
-        st.text_input("SKU:")
-        st.text_input("Kod:")
+        st.text_input("SKU:", key="sku_input")
         st.checkbox("Pokaż warianty", value=True)
-        c1, c2, c3 = st.columns(3)
-        c1.button("Filtruj", type="primary")
-        c2.button("Zakładkę")
-        c3.button("Resetuj")
+        f_btns = st.columns(3)
+        f_btns[0].button("FILTRUJ", type="primary", use_container_width=True)
+        f_btns[1].button("ZAKŁADKĘ", use_container_width=True)
+        f_btns[2].button("🔄", use_container_width=True)
 
-with col_f2:
+with col_right:
     with st.expander("📂 Filtry - Wielowybór", expanded=True):
-        f_c1, f_c2, f_c3 = st.columns(3)
-        f_c1.selectbox("Zakładka:", ["Wybierz...", "Magazyn A", "Magazyn B"])
-        f_c2.multiselect("Grupy:", ["Grupa 1", "Grupa 2"])
-        f_c3.selectbox("Typ PIM:", ["Dowolny", "Zdefiniowany"])
+        f_row1 = st.columns(3)
+        f_row1[0].selectbox("Zakładka:", ["Wszystkie", "Magazyn Główny", "Outlet"])
+        f_row1[1].multiselect("Grupy:", ["Grupa A", "Grupa B", "Grupa C"])
+        f_row1[2].selectbox("Typ PIM:", ["Dowolny", "Zdefiniowany"])
         
-        f_c4, f_c5, f_c6 = st.columns(3)
-        f_c4.text_input("Nazwa:")
-        f_c5.date_input("Odcięcie od:")
-        f_c6.date_input("do:")
-        st.button("FILTRUJ ZAAWANSOWANE")
+        f_row2 = st.columns(3)
+        f_row2[0].text_input("Kod obcy:")
+        f_row2[1].text_input("Nazwa produktu:")
+        f_row2[2].date_input("Data odcięcia:")
+        st.button("USTAWIENIA ZAAWANSOWANE", use_container_width=True)
 
-# --- WYBÓR KOLUMN ---
-with st.expander("📊 Wybierz kolumny tabeli"):
-    st.multiselect("Kolumny towaru:", ["Kod", "EAN", "Waga", "Katalog"], default=["Kod", "EAN"])
-    st.multiselect("Porównywarki:", ["Ceneo", "Google", "Empik"])
+# 6. TABELA DANYCH "MOJE DOSTAWY"
+st.subheader(f"MOJE DOSTAWY - Widok: {menu_selection}")
 
-# --- TABELA DANYCH (Moje Dostawy) ---
-st.subheader("MOJE DOSTAWY")
+# Przykładowe dane z kolorami statusów
+df_data = pd.DataFrame([
+    {"Lp.": 1, "Dostawca": "ASG", "Nr dostawy": "14/23", "Status": "BR", "Zakupy": "Brak danych", "Kolor": "#f8d7da"},
+    {"Lp.": 2, "Dostawca": "BARREL OPTICS", "Nr dostawy": "1/24-sampl", "Status": "Zamówiono", "Zakupy": "Brak danych", "Kolor": "#ffffff"},
+    {"Lp.": 3, "Dostawca": "WYDAWNICTWO X", "Nr dostawy": "7/24", "Status": "SKŁAD", "Zakupy": "W przygotowaniu", "Kolor": "#d4edda"},
+    {"Lp.": 4, "Dostawca": "Darek", "Nr dostawy": "1/24", "Status": "Zrealizowane", "Zakupy": "Brak danych", "Kolor": "#ffffff"},
+    {"Lp.": 5, "Dostawca": "ZIRI", "Nr dostawy": "4/24", "Status": "SKŁAD", "Zakupy": "Gotowy", "Kolor": "#d4edda"},
+])
 
-# Przykładowe dane odzwierciedlające zdjęcie
-data = {
-    "Lp.": [1, 2, 3, 4, 5],
-    "Dostawca": ["ABC", "BARREL OPTICS", "WYDAWNICTWO X", "Darek", "ASG"],
-    "Nr dostawy": ["14/23", "1/24-sampl", "7/24", "1/24", "13/20"],
-    "Data": ["17-03-2024", "12-01-2024", "12-01-2024", "-", "05-03-2024"],
-    "Priorytet": ["Normalny", "Normalny", "Normalny", "Normalny", "Normalny"],
-    "Status": ["BR", "Zamówiono", "SKŁAD", "Zrealizowano", "BR"],
-    "Zakupy": ["Brak danych", "Brak danych", "W przygotowaniu", "Brak danych", "Gotowy"]
-}
+# Funkcja do stylizacji wierszy
+def style_row(row):
+    return [f'background-color: {row.Kolor}' for _ in row]
 
-df = pd.DataFrame(data)
+st.dataframe(
+    df_data.drop(columns=["Kolor"]).style.apply(style_row, axis=1),
+    use_container_width=True,
+    hide_index=True
+)
 
-# Wyświetlenie tabeli z interaktywnymi funkcjami
-st.dataframe(df, use_container_width=True, hide_index=True)
-
-# Pasek statusu na dole
-st.info("Znaleziono towary: > 1000")
+st.info(f"Podsumowanie: Znaleziono towary dla sekcji {menu_selection} (> 1000 pozycji)")
