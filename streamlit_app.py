@@ -44,7 +44,7 @@ with st.sidebar:
         size='sm',
     )
 
-# 4. GÓRNE TAGI (Odwzorowanie kolorowych zakładek ze zdjęcia)
+# 4. GÓRNE TAGI
 st.markdown("""
     <div class="tag-container">
         <span class="tag" style="background-color: #333;">#01 MEDIA</span>
@@ -61,7 +61,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# 5. FILTRY (Układ kolumnowy)
+# 5. FILTRY
 col_left, col_right = st.columns([1, 2])
 
 with col_left:
@@ -89,7 +89,7 @@ with col_right:
 # 6. TABELA DANYCH "MOJE DOSTAWY"
 st.subheader(f"MOJE DOSTAWY - Widok: {menu_selection}")
 
-# Przykładowe dane z kolorami statusów
+# Twoje dane
 df_data = pd.DataFrame([
     {"Lp.": 1, "Dostawca": "ASG", "Nr dostawy": "14/23", "Status": "BR", "Zakupy": "Brak danych", "Kolor": "#f8d7da"},
     {"Lp.": 2, "Dostawca": "BARREL OPTICS", "Nr dostawy": "1/24-sampl", "Status": "Zamówiono", "Zakupy": "Brak danych", "Kolor": "#ffffff"},
@@ -98,32 +98,21 @@ df_data = pd.DataFrame([
     {"Lp.": 5, "Dostawca": "ZIRI", "Nr dostawy": "4/24", "Status": "SKŁAD", "Zakupy": "Gotowy", "Kolor": "#d4edda"},
 ])
 
-# 2. Poprawiona funkcja stylizująca (bezpieczniejszy dostęp przez klucz słownika)
+# Poprawna funkcja stylizująca
 def style_row(row):
     color = row['Kolor']
     return [f'background-color: {color}' for _ in row]
 
-# 3. Nakładamy styl na PEŁNY dataframe (z kolumną Kolor)
+# Nakładamy styl i wyświetlamy (BEZ zdublowanego kodu poniżej)
 styled_df = df_data.style.apply(style_row, axis=1)
 
-# 4. Wyświetlamy stylizowany obiekt, ukrywając kolumnę 'Kolor' w konfiguracji widoku
 st.dataframe(
     styled_df,
     use_container_width=True,
     hide_index=True,
     column_config={
-        "Kolor": None  # To sprawia, że kolumna jest używana pod spodem, ale niewidoczna w GUI
+        "Kolor": None  # Ukrywa kolumnę pomocniczą
     }
-)
-
-# Funkcja do stylizacji wierszy
-def style_row(row):
-    return [f'background-color: {row.Kolor}' for _ in row]
-
-st.dataframe(
-    df_data.drop(columns=["Kolor"]).style.apply(style_row, axis=1),
-    use_container_width=True,
-    hide_index=True
 )
 
 st.info(f"Podsumowanie: Znaleziono towary dla sekcji {menu_selection} (> 1000 pozycji)")
