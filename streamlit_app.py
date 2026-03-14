@@ -154,3 +154,48 @@ if raw_data:
     st.dataframe(df[selected_cols], use_container_width=True, hide_index=True)
 else:
     st.warning("Brak dostaw przypisanych do Twojego konta.")
+
+# 9. GENEROWANIE DANYCH (Pełne 21 kolumn jak na wzorze)
+raw_data = []
+for i, d in enumerate(dostawcy_filtered):
+    raw_data.append({
+        "Lp.": i + 1,
+        "Dostawca": d["firma"],
+        "Nr dostawy": f"{14+i}/26 🔗",
+        "HWO": "12-03-2026",
+        "Data aw. OD": "12-03-2026",
+        "Data aw. DO": "",
+        "Priorytet": "Normalny",
+        "Status": "SKŁAD" if i == 2 else "Zamówione",
+        "Zakupy": "W przygotowaniu" if i == 2 else "Brak danych",
+        "Kurier": "Virtus Logistics",
+        "List": "/",
+        "Brak AW": "/",
+        "Brak FV": "Nie",
+        "Cen": "Nie",
+        "New": "Tak" if i == 2 else "Nie",
+        "Waga": "150kg",
+        "Knt": "/",
+        "Pal": "1",
+        "Box": "2",
+        "Opiekun": d["opiekun"],
+        "Aktualizacja": "12-03-2026 13:42:56"
+    })
+
+if raw_data:
+    df = pd.DataFrame(raw_data)
+    st.dataframe(
+        df[selected_cols],
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Lp.": st.column_config.Column(width=40),
+            "Dostawca": st.column_config.Column(width=200),
+            "Nr dostawy": st.column_config.Column(width=130),
+            "Status": st.column_config.Column(width=100),
+            "Waga": st.column_config.Column(width=70),
+            "Pal": st.column_config.Column(width=45),
+            "Box": st.column_config.Column(width=45),
+            "Aktualizacja": st.column_config.Column(width=160),
+        }
+    )
