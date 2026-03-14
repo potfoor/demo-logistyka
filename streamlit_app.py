@@ -13,7 +13,7 @@ osoby_kolory = {
     "Marek Woźniak": "#0288d1"
 }
 
-# 3. BAZA DOSTAWCÓW (Twoja lista 30 firm)
+# 3. BAZA DOSTAWCÓW (Firmy z Twojej listy)
 lista_firm = [
     "Samsung Electronics", "Toyota Motor Poland", "Coca-Cola HBC", "Microsoft",
     "Nestlé Polska", "Apple Poland", "Grupa Azoty", "Volkswagen Group",
@@ -30,21 +30,38 @@ dostawcy_base = [
     for i, nazwa in enumerate(lista_firm)
 ]
 
-# 4. CSS - Stylizacja zgodna z Twoim wzorem
+# 4. CSS DLA IDEALNEGO UKŁADU
 st.markdown("""
     <style>
     .tag-container { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px 0; }
     .tag { padding: 3px 8px; border-radius: 3px; font-size: 9px; color: white; font-weight: bold; text-transform: uppercase; }
-    .stButton > button { width: 100%; }
-    /* Stylizacja popovera 'Karta' */
+    
+    /* Stylizacja przycisków w sekcji Akcje Szybkie */
+    .stButton > button { 
+        width: 100%; 
+        border-radius: 5px; 
+        height: 38px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #212529;
+    }
+    .stButton > button:hover { border-color: #ff4b4b; color: #ff4b4b; }
+    
+    /* Przycisk Zastosuj Filtry */
+    div[data-testid="column"]:nth-of-type(4) .stButton > button {
+        background-color: #ff4b4b;
+        color: white;
+        border: none;
+        font-weight: bold;
+    }
+    
+    /* Popover Karta */
     div[data-testid="stPopover"] > button { 
         margin-top: 28px; 
         border: 1px solid #d1d5db; 
-        height: 38px;
-        background-color: white;
+        height: 38px; 
+        width: 100%;
     }
-    /* Nagłówki sekcji */
-    .section-header { margin-top: 20px; margin-bottom: 10px; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -63,36 +80,51 @@ with st.sidebar:
         ], label='NAWIGACJA', open_all=True, size='sm'
     )
 
-# 6. SEKCJA WYSZUKIWANIA (Zgodnie z screenshotem)
+# 6. SEKCJA WYSZUKIWANIE (Zgodnie z wymaganiami)
 st.header("🔍 Wyszukiwanie")
+
 with st.container(border=True):
-    c1, c2, c3 = st.columns([3, 1, 3])
-    with c1:
+    # Rząd 1: Filtry główne
+    col1, col2, col3 = st.columns([3, 1, 3])
+    with col1:
         dostawca_sel = st.selectbox("Dostawca:", ["Wszyscy"] + [d["firma"] for d in dostawcy_base])
-    with c2:
+    with col2:
         with st.popover("📇 Karta"):
             if dostawca_sel != "Wszyscy":
                 st.write(f"**{dostawca_sel}**")
                 st.text_input("Kontakt:", "Jan Nowak")
-                st.text_input("B2B URL:", f"https://b2b.{dostawca_sel.lower().replace(' ', '')}.pl")
-                st.button("Zapisz")
+                st.button("Zapisz dane")
             else: st.info("Wybierz firmę")
-    with c3:
+    with col3:
         odp_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()))
 
-    c4, c5, c6 = st.columns([3, 2, 2])
-    with c4:
-        st.text_input("Ticket:", placeholder="Wpisz numer...")
-    with c5:
+    # Rząd 2: Ticket, Flaga i Akcje
+    col4, col5, col6, col7 = st.columns([3, 3, 2, 2])
+    with col4:
+        ticket_input = st.text_input("Ticket:", placeholder="Wpisz numer...")
+    with col5:
+        flaga_sel = st.multiselect("Flaga:", ["PILNE", "POWTÓRKA", "REKLAMACJA", "OPÓŹNIONE"])
+    with col6:
         st.write("**Statusy:**")
-        st_c1, st_c2 = st.columns(2)
-        st_c1.checkbox("Otwarte", value=True)
-        st_c2.checkbox("Zamknięte")
-    with c6:
+        otwarte = st.checkbox("Otwarte", value=True)
+        zamkniete = st.checkbox("Zamknięte")
+    with col7:
         st.write("**Akcje:**")
-        st.button("🚀 ZASTOSUJ FILTRY", type="primary")
+        st.button("🚀 ZASTOSUJ FILTRY")
 
-# LOGIKA FILTRÓW
+    st.write("---")
+    
+    # Rząd 3: Akcje Szybkie (Przyciski, o które prosiłeś)
+    st.write("**Akcje Szybkie:**")
+    btn_col1, btn_col2, btn_col3 = st.columns(3)
+    with btn_col1:
+        st.button("➕ Dodaj Dostawcę")
+    with btn_col2:
+        st.button("🚛 Dodaj Przewoźnika")
+    with btn_col3:
+        st.button("🔄 Zamówienia Cykliczne")
+
+# --- LOGIKA FILTROWANIA ---
 dostawcy_filtered = dostawcy_base
 if odp_sel:
     dostawcy_filtered = [d for d in dostawcy_base if d["opiekun"] in odp_sel]
@@ -108,18 +140,18 @@ for d in dostawcy_filtered:
 tags_html += '</div>'
 st.markdown(tags_html, unsafe_allow_html=True)
 
-# 8. ZARZĄDZANIE TABELĄ (Sekcja z Twojego screenshota 2)
+# 8. ZARZĄDZANIE TABELĄ
 st.write("---")
 st.subheader("📊 Zarządzanie Tabelą")
 z1, z2 = st.columns([3, 1])
 with z1:
     all_columns = ["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny", "Zakupy"]
-    selected_cols = st.multiselect("Wybierz kolumny:", all_columns, default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny"])
+    selected_cols = st.multiselect("Wybierz kolumny tabeli:", all_columns, default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny"])
 with z2:
-    st.selectbox("Szablony widoku:", ["Standardowy", "Logistyka", "Finanse"])
+    st.selectbox("Szablony widoku:", ["Standardowy", "Magazyn", "Finanse"])
     st.button("💾 Zapisz Szablon")
 
-# 9. TABELA - KLUCZOWE USTAWIENIA SZEROKOŚCI
+# 9. TABELA (Sztywne odstępy jak na wzorze)
 raw_data = []
 for i, d in enumerate(dostawcy_filtered):
     raw_data.append({
@@ -133,29 +165,16 @@ for i, d in enumerate(dostawcy_filtered):
 
 if raw_data:
     df = pd.DataFrame(raw_data)
-    
     st.dataframe(
         df[selected_cols],
         use_container_width=True,
         hide_index=True,
         column_config={
-            "Lp.": st.column_config.Column(
-                width=45,  # Sztywne zwężenie kolumny Lp.
-            ),
-            "Dostawca": st.column_config.Column(
-                width="large", # Rozciągnięcie nazwy firmy
-            ),
-            "Nr dostawy": st.column_config.Column(
-                width="medium",
-            ),
-            "Status": st.column_config.Column(
-                width="small",
-            ),
-            "Odpowiedzialny": st.column_config.Column(
-                width="medium",
-            ),
-            "Zakupy": st.column_config.Column(
-                width="small",
-            ),
+            "Lp.": st.column_config.Column(width=45),
+            "Dostawca": st.column_config.Column(width="large"),
+            "Nr dostawy": st.column_config.Column(width="medium"),
+            "Status": st.column_config.Column(width="small"),
+            "Odpowiedzialny": st.column_config.Column(width="medium"),
+            "Zakupy": st.column_config.Column(width="small"),
         }
     )
