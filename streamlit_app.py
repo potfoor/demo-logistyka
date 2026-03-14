@@ -48,12 +48,16 @@ with st.sidebar:
 st.markdown("""
     <div class="tag-container">
         <span class="tag" style="background-color: #333;">#01 MEDIA</span>
-        <span class="tag" style="background-color: #8db600;">#4F AW'23</span>
-        <span class="tag" style="background-color: #8db600;">#4F AW'24</span>
-        <span class="tag" style="background-color: #2e7d32;">#4F GR.F</span>
-        <span class="tag" style="background-color: #ff5722;">#4SHOOTER</span>
-        <span class="tag" style="background-color: #0288d1;">#A ZESTAWY</span>
-        <span class="tag" style="background-color: #0097a7;">#ABISAL</span>
+        <span class="tag" style="background-color: #8db600;">2020 Supplies</span>
+        <span class="tag" style="background-color: #8db600;">4Shooter</span>
+        <span class="tag" style="background-color: #2e7d32;">5.11</span>
+        <span class="tag" style="background-color: #ff5722;">ABEKOM</span>
+        <span class="tag" style="background-color: #0288d1;">ABISAL</span>
+        <span class="tag" style="background-color: #0097a7;">ABSOLUTUS</span>
+        <span class="tag" style="background-color: #2e7d32;">ACCELENT</span>
+        <span class="tag" style="background-color: #ff5722;">ACERBI</span>
+        <span class="tag" style="background-color: #0288d1;">ACP sPORT</span>
+        <span class="tag" style="background-color: #0097a7;">ACTION HOLSTERS</span>        
     </div>
 """, unsafe_allow_html=True)
 
