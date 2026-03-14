@@ -142,7 +142,7 @@ with st.container(border=True):
     # Dalsza część formularza
     c4, c5, c6, c7 = st.columns([3, 3, 2, 2])
     with c4: st.text_input("Ticket:", placeholder="Nr ticketu...")
-    with c5: st.multiselect("Flaga:", ["PILNE", "POWTÓRKA"])
+    with c5: st.multiselect("Priorytet:", ["PILNE", "WYSOKI"])
     with c6:
         st.write("**Statusy:**")
         st.checkbox("Otwarte", value=True)
