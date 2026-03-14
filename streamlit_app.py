@@ -64,15 +64,6 @@ st.markdown("""
 # 5. FILTRY
 col_left, col_right = st.columns([1, 2])
 
-with col_left:
-    with st.expander("🔍 Filtry - Unikalne", expanded=True):
-        st.text_input("SKU:", key="sku_input")
-        st.checkbox("Pokaż warianty", value=True)
-        f_btns = st.columns(3)
-        f_btns[0].button("FILTRUJ", type="primary", use_container_width=True)
-        f_btns[1].button("ZAKŁADKĘ", use_container_width=True)
-        f_btns[2].button("🔄", use_container_width=True)
-
 with col_right:
     with st.expander("📂 Filtry - Wielowybór", expanded=True):
         f_row1 = st.columns(3)
