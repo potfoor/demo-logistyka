@@ -13,38 +13,22 @@ osoby_kolory = {
     "Marek Woźniak": "#0288d1"
 }
 
-# 3. BAZA DOSTAWCÓW
+# 3. NOWA LISTA FIRM (Normalne firmy)
+lista_firm = [
+    "Samsung Electronics", "Toyota Motor Poland", "Coca-Cola HBC", "Microsoft",
+    "Nestlé Polska", "Apple Poland", "Grupa Azoty", "Volkswagen Group",
+    "Procter & Gamble", "Siemens", "Philips Lighting", "Robert Bosch",
+    "L'Oréal Polska", "PepsiCo", "Unilever", "ABB Sp. z o.o.", "Danone",
+    "IKEA Retail", "Bridgestone", "Dell Technologies", "BASF Polska",
+    "Michelin", "Saint-Gobain", "Continental", "Sony Interactive",
+    "Huawei Polska", "Goodyear", "Henkel Polska", "LG Electronics", "Castorama Polska"
+]
+
+# Automatyczne generowanie bazy z przypisaniem opiekunów
+opiekunowie = list(osoby_kolory.keys())
 dostawcy_base = [
-    {"firma": "Logistics Hub Sp. z o.o.", "opiekun": "Jan Kowalski"},
-    {"firma": "Trans-Port Solutions", "opiekun": "Anna Nowak"},
-    {"firma": "Global Cargo Express", "opiekun": "Piotr Zieliński"},
-    {"firma": "Euro-Spedycja S.A.", "opiekun": "Marek Woźniak"},
-    {"firma": "Baltic Freight Systems", "opiekun": "Jan Kowalski"},
-    {"firma": "Rapid Delivery Service", "opiekun": "Anna Nowak"},
-    {"firma": "Pol-Express Logistics", "opiekun": "Piotr Zieliński"},
-    {"firma": "Customs Clearance Pro", "opiekun": "Marek Woźniak"},
-    {"firma": "Trade & Ship Co.", "opiekun": "Jan Kowalski"},
-    {"firma": "Fast Track Forwarding", "opiekun": "Anna Nowak"},
-    {"firma": "Mega-Trans International", "opiekun": "Piotr Zieliński"},
-    {"firma": "Eco-Logistyka", "opiekun": "Marek Woźniak"},
-    {"firma": "Sky Cargo Group", "opiekun": "Jan Kowalski"},
-    {"firma": "Smart Warehouse Sp. z o.o.", "opiekun": "Anna Nowak"},
-    {"firma": "Ocean-Way Shipping", "opiekun": "Piotr Zieliński"},
-    {"firma": "Direct Trucking Poland", "opiekun": "Marek Woźniak"},
-    {"firma": "Prime Supply Chain", "opiekun": "Jan Kowalski"},
-    {"firma": "Nord-Express Logistyka", "opiekun": "Anna Nowak"},
-    {"firma": "Inter-Global Transit", "opiekun": "Piotr Zieliński"},
-    {"firma": "Best Way Spedycja", "opiekun": "Marek Woźniak"},
-    {"firma": "Cargo Master Group", "opiekun": "Jan Kowalski"},
-    {"firma": "Elite Freight Services", "opiekun": "Anna Nowak"},
-    {"firma": "Road-Runner Transport", "opiekun": "Piotr Zieliński"},
-    {"firma": "Blue Water Logistics", "opiekun": "Marek Woźniak"},
-    {"firma": "National Cargo Network", "opiekun": "Jan Kowalski"},
-    {"firma": "Flexi-Trans S.A.", "opiekun": "Anna Nowak"},
-    {"firma": "Iron-Way Rail Freight", "opiekun": "Piotr Zieliński"},
-    {"firma": "Advanced Logistics Lab", "opiekun": "Marek Woźniak"},
-    {"firma": "Horizon Forwarding", "opiekun": "Jan Kowalski"},
-    {"firma": "Master-Supply Solutions", "opiekun": "Anna Nowak"}
+    {"firma": nazwa, "opiekun": opiekunowie[i % len(opiekunowie)]}
+    for i, nazwa in enumerate(lista_firm)
 ]
 
 # 4. CSS DLA CZYTELNOŚCI
@@ -54,7 +38,7 @@ st.markdown("""
     .tag { padding: 3px 8px; border-radius: 3px; font-size: 9px; color: white; font-weight: bold; text-transform: uppercase; }
     .stButton > button { width: 100%; }
     /* Fix dla popovera, żeby nie rozpychał kolumny */
-    div[data-testid="stPopover"] > button { margin-top: 28px; }
+    div[data-testid="stPopover"] > button { margin-top: 28px; border: 1px solid #d1d5db; height: 38px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -85,19 +69,20 @@ with st.container(border=True):
     with c2:
         with st.popover("📇 Karta"):
             if dostawca_sel != "Wszyscy":
-                st.write(f"**{dostawca_sel}**")
-                st.text_input("Kontakt:", "Jan Nowak")
-                st.text_input("B2B URL:", "https://b2b.link.pl")
-                st.text_input("Login:", "admin")
-                st.button("Zapisz")
-            else: st.info("Wybierz dostawcę")
+                st.write(f"**Karta dostawcy: {dostawca_sel}**")
+                st.text_input("Osoba kontaktowa:", "Jan Nowak")
+                st.text_input("B2B URL:", f"https://b2b.{dostawca_sel.lower().replace(' ', '')}.pl")
+                st.text_input("Login:", "admin_pl")
+                st.button("💾 Zapisz zmiany")
+            else: 
+                st.info("Wybierz dostawcę")
     with c3:
         odp_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()))
 
     # Rząd 2: Dodatkowe parametry i Statusy
     c4, c5, c6 = st.columns([3, 2, 2])
     with c4:
-        ticket_input = st.text_input("Ticket:", placeholder="Wpisz nr...")
+        ticket_input = st.text_input("Ticket:", placeholder="Wpisz nr ticketu...")
     with c5:
         st.write("**Statusy:**")
         st_col1, st_col2 = st.columns(2)
@@ -114,7 +99,8 @@ if odp_sel:
 if dostawca_sel != "Wszyscy":
     dostawcy_filtered = [d for d in dostawcy_filtered if d["firma"] == dostawca_sel]
 
-# 7. TAGI
+# 7. TAGI (Pod filtrami)
+st.write(f"**Aktywni Dostawcy ({len(dostawcy_filtered)}):**")
 tags_html = '<div class="tag-container">'
 for d in dostawcy_filtered:
     kolor = osoby_kolory[d["opiekun"]]
@@ -139,10 +125,16 @@ with z2:
 raw_data = []
 for i, d in enumerate(dostawcy_filtered):
     raw_data.append({
-        "Lp.": i + 1, "Dostawca": d["firma"], "Nr dostawy": f"{i+100}/24",
+        "Lp.": i + 1, 
+        "Dostawca": d["firma"], 
+        "Nr dostawy": f"{i+100}/24",
         "Status": "SKŁAD" if i % 2 == 0 else "W DRODZE",
-        "Odpowiedzialny": d["opiekun"], "Zakupy": "OK", "Data Awizacji": "2024-03-20"
+        "Odpowiedzialny": d["opiekun"], 
+        "Zakupy": "OK", 
+        "Data Awizacji": "2024-03-20"
     })
 
 if raw_data:
     st.dataframe(pd.DataFrame(raw_data)[selected_cols], use_container_width=True, hide_index=True)
+else:
+    st.warning("Brak wyników dla wybranych kryteriów.")
