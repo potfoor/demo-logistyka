@@ -14,7 +14,7 @@ osoby_kolory = {
 }
 ZALOGOWANY_UZYTKOWNIK = "Jan Kowalski"
 
-# 3. BAZA DANYCH
+# 3. BAZA DANYCH (Więcej dostaw dla Jana Kowalskiego)
 lista_firm = [
     "Samsung", "Toyota", "Coca-Cola", "Microsoft", "Nestlé", "Apple", "LG", "Sony", 
     "Dell", "IKEA", "Nike", "Adidas", "BMW", "Amazon", "DHL", "FedEx", "Pepsi", "Canon"
@@ -38,29 +38,32 @@ df = pd.DataFrame(raw_data)
 alerty_jana = df[(df["Opiekun"] == ZALOGOWANY_UZYTKOWNIK) & (df["Cen"] == "TAK")]
 liczba_alertow = len(alerty_jana)
 
-# 4. CSS DLA INTERFEJSU I ODSTĘPÓW 50PX
+# 4. CSS DLA INTERFEJSU (Karta, Przyciski 50px, Kolory)
 st.markdown("""
     <style>
     .tag-container { display: flex; flex-wrap: wrap; gap: 4px; padding-bottom: 20px; }
     .tag { padding: 3px 8px; border-radius: 3px; font-size: 10px; color: white; font-weight: bold; text-transform: uppercase; }
     
-    /* Stylizacja przycisków */
+    /* Przyciski standardowe */
     .stButton > button { width: 100%; height: 38px; border-radius: 4px; }
     div[data-testid="column"] button[kind="primary"] { background-color: #ff4b4b !important; color: white !important; }
     
-    /* Kontener dla Szybkich Akcji z odstępem 50px */
-    .szybkie-akcje-container {
-        display: flex;
-        gap: 50px !important;
-        align-items: center;
+    /* Specjalny kontener dla Szybkich Akcji - wymuszenie odstępu 50px */
+    [data-testid="column"]:has(button) {
+        padding-left: 0px !important;
+        padding-right: 0px !important;
     }
-    .szybkie-akcje-container > div {
-        flex: 1;
+    
+    /* Popover Karty - wymiary i pozycja */
+    div[data-testid="stPopover"] > button { 
+        margin-top: 28px; 
+        height: 38px; 
+        width: 100%; 
+        border: 1px solid #d1d5db; 
     }
 
     .alert-box { padding: 15px; background-color: #fff5f5; border-left: 5px solid #ff4b4b; border-radius: 5px; margin-bottom: 10px; }
     [data-testid="stDataFrame"] { font-size: 11px; }
-    div[data-testid="stPopover"] > button { margin-top: 28px; height: 38px; width: 100%; border: 1px solid #d1d5db; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -89,12 +92,12 @@ if menu_selected == 'Powiadomienia':
     st.subheader(f"Alerty cenowe dla: {ZALOGOWANY_UZYTKOWNIK}")
     if not alerty_jana.empty:
         for _, row in alerty_jana.iterrows():
-            st.markdown(f"""<div class="alert-box"><strong style="color: #ff4b4b;">⚠️ ALERT CENOWY</strong><br>Dostawca: <b>{row['Dostawca']}</b> | Nr dostawy: <b>{row['Nr dostawy']}</b><br><small>Wykryto niezgodność ceny w B2B.</small></div>""", unsafe_allow_html=True)
+            st.markdown(f"""<div class="alert-box"><strong style="color: #ff4b4b;">⚠️ ALERT CENOWY</strong><br>Dostawca: <b>{row['Dostawca']}</b> | Nr dostawy: <b>{row['Nr dostawy']}</b><br><small>Weryfikacja cen B2B wymagana.</small></div>""", unsafe_allow_html=True)
     else:
         st.success("Brak nowych powiadomień.")
 
 else:
-    # --- WIDOK DOSTAW ---
+    # --- WIDOK DOSTAW (DASHBOARD / MOJE / WSZYSTKIE) ---
     df_display = df.copy()
     if menu_selected == 'Moje Dostawy':
         df_display = df[df["Opiekun"] == ZALOGOWANY_UZYTKOWNIK]
@@ -108,22 +111,39 @@ else:
     tags_html += '</div>'
     st.markdown(tags_html, unsafe_allow_html=True)
 
-    # 6. PANEL WYSZUKIWANIA
+    # 6. PANEL WYSZUKIWANIA + KARTA DOSTAWCY
     st.header("🔍 Wyszukiwanie")
     with st.container(border=True):
         c1, c2, c3 = st.columns([3, 1, 3])
         with c1:
             d_sel = st.selectbox("Dostawca:", ["Wszyscy"] + list(df_display["Dostawca"].unique()))
+        
         with c2:
+            # --- PRZYWRÓCONA KARTA DOSTAWCY ---
             with st.popover("📇 KARTA"):
                 if d_sel != "Wszyscy":
-                    st.subheader(f"Karta: {d_sel}")
-                    st.text_input("URL:", f"https://b2b.{d_sel.lower()}.com")
-                    st.text_input("Login:", "jan_logistyk")
-                    st.text_input("Hasło:", "********", type="password")
-                else: st.warning("Wybierz dostawcę")
+                    st.subheader(f"Szczegóły: {d_sel}")
+                    st.markdown("---")
+                    st.write("**🔐 Logowanie B2B**")
+                    st.text_input("URL Serwisu:", f"https://b2b-portal.{d_sel.lower()}.pl")
+                    col_pass1, col_pass2 = st.columns(2)
+                    col_pass1.text_input("Login:", "jan.kowalski")
+                    col_pass2.text_input("Hasło:", "********", type="password")
+                    
+                    st.markdown("---")
+                    st.write("**👤 Informacje Handlowe**")
+                    st.text_input("Osoba kontaktowa:", "Marek Handlowiec")
+                    st.text_input("Email Price List:", "ceny@dostawca.pl")
+                    st.multiselect("Typ serwisu:", ["B2B", "Zam. Email", "EDI", "API"], default=["B2B", "Zam. Email"])
+                    
+                    if st.button("💾 Zapisz w bazie"):
+                        st.success("Dane zaktualizowane!")
+                else:
+                    st.warning("Wybierz dostawcę z listy obok, aby zobaczyć kartę.")
+
         with c3:
-            o_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()), default=[ZALOGOWANY_UZYTKOWNIK] if menu_selected == 'Moje Dostawy' else [])
+            o_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()), 
+                                   default=[ZALOGOWANY_UZYTKOWNIK] if menu_selected == 'Moje Dostawy' else [])
 
         c4, c5, c6, c7 = st.columns([3, 3, 2, 2])
         with c4: st.text_input("Ticket:", placeholder="Wpisz numer...")
@@ -138,25 +158,24 @@ else:
         st.write("---")
         # SZYBKIE AKCJE Z ODSTĘPEM 50PX
         st.write("**Akcje Szybkie:**")
-        # Tworzymy kontener z 4 kolumnami i CSS gap
-        st.markdown('<div class="szybkie-akcje-container">', unsafe_allow_html=True)
-        sa1, sa2, sa3, sa4 = st.columns(4)
+        # Używamy pustych kolumn jako separatorów dla uzyskania 50px (symulacja odstępu)
+        sa1, sep1, sa2, sep2, sa3, sep3, sa4 = st.columns([1, 0.2, 1, 0.2, 1, 0.2, 1])
         with sa1: st.button("✨ Nowa dostawa")
         with sa2: st.button("➕ Dodaj Dostawcę")
         with sa3: st.button("🚛 Dodaj Przewoźnika")
         with sa4: st.button("🔄 Zamówienia Cykliczne")
-        st.markdown('</div>', unsafe_allow_html=True)
 
-    # 7. ZARZĄDZANIE TABELĄ (Przywrócone nad tabelę)
+    # 7. ZARZĄDZANIE TABELĄ
     st.write("---")
     st.subheader("📊 Zarządzanie Tabelą")
     wszystkie_kolumny = ["Lp.", "Dostawca", "Nr dostawy", "HWO", "Data aw. OD", "Data aw. DO", "Priorytet", "Status", "Zakupy", "Kurier", "List", "Brak AW", "Brak FV", "Cen", "New", "Waga", "Knt", "Pal", "Box", "Opiekun", "Aktualizacja"]
     
     col_mgmt1, col_mgmt2 = st.columns([3, 1])
     with col_mgmt1:
-        selected_cols = st.multiselect("Pokaż kolumny:", wszystkie_kolumny, default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Cen", "Waga", "Opiekun"])
+        selected_cols = st.multiselect("Pokaż kolumny:", wszystkie_kolumny, 
+                                      default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Cen", "Waga", "Opiekun"])
     with col_mgmt2:
-        st.selectbox("Widok:", ["Standardowy", "Pełny Logistyczny"])
+        st.selectbox("Widok:", ["Standardowy", "Widok Pełny"])
 
     # 8. TABELA
     final_df = df_display.copy()
