@@ -47,13 +47,12 @@ dostawcy_base = [
     {"firma": "Master-Supply Solutions", "opiekun": "Anna Nowak"}
 ]
 
-# 4. CSS DLA STYLIZACJI
+# 4. CSS
 st.markdown("""
     <style>
     .tag-container { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px 0; }
     .tag { padding: 3px 8px; border-radius: 3px; font-size: 9px; color: white; font-weight: bold; text-transform: uppercase; }
     .stButton > button { width: 100%; }
-    /* Stylizacja przycisku popovera */
     div[data-testid="stPopover"] > button { margin-top: 28px; border: 1px solid #d1d5db; }
     </style>
 """, unsafe_allow_html=True)
@@ -61,31 +60,31 @@ st.markdown("""
 # 5. PANEL BOCZNY (Drzewko)
 with st.sidebar:
     st.title("Panel Sterowania")
+    # Poprawione TreeItem na label=
     menu_selection = sac.tree(
         items=[
-            sac.TreeItem('Zamówienia', icon='box', children=[
-                sac.TreeItem('Powiadomienia', icon='bell', children=[sac.TreeItem('Aktywne')]),
-                sac.TreeItem('Ticket', icon='ticket-perforated', children=[
-                    sac.TreeItem('Moje Dostawy'), sac.TreeItem('Wszystkie Dostawy'),
-                    sac.TreeItem('Odprawa Celna'), sac.TreeItem('Problemy Dostaw')
+            sac.TreeItem(label='Zamówienia', icon='box', children=[
+                sac.TreeItem(label='Powiadomienia', icon='bell', children=[sac.TreeItem(label='Aktywne')]),
+                sac.TreeItem(label='Ticket', icon='ticket-perforated', children=[
+                    sac.TreeItem(label='Moje Dostawy'), sac.TreeItem(label='Wszystkie Dostawy'),
+                    sac.TreeItem(label='Odprawa Celna'), sac.TreeItem(label='Problemy Dostaw')
                 ]),
-                sac.TreeItem('Awizacja', icon='calendar-event', children=[sac.TreeItem('Kalendarz')]),
+                sac.TreeItem(label='Awizacja', icon='calendar-event', children=[sac.TreeItem(label='Kalendarz')]),
             ]),
         ], label='NAWIGACJA', open_all=True, size='sm'
     )
 
-# --- SEKCJA WYSZUKIWANIA ---
+# 6. WYSZUKIWANIE
 st.header("🔍 Wyszukiwanie")
 
 with st.container(border=True):
-    # Rząd 1: Dostawca (z ikonami) i Karta
     c1, c2, c3 = st.columns([3, 1, 3])
     
     with c1:
-        # NOWOCZESNA LISTA Z IKONAMI
+        # POPRAWKA: Dodano jawne label= dla każdego CascaderItem
         dostawca_sel = sac.cascader(
             label='Dostawca:',
-            items=[sac.CascaderItem(d['firma'], icon='person-vcard') for d in dostawcy_base],
+            items=[sac.CascaderItem(label=d['firma'], icon='person-vcard') for d in dostawcy_base],
             placeholder='Wybierz dostawcę...',
             search=True,
             clearable=True,
@@ -93,7 +92,6 @@ with st.container(border=True):
         )
     
     with c2:
-        # POPOVER Z KARTĄ
         with st.popover("📇 Karta"):
             if dostawca_sel:
                 st.subheader(f"Szczegóły: {dostawca_sel}")
@@ -103,12 +101,11 @@ with st.container(border=True):
                 st.text_input("Hasło:", type="password", value="demo123")
                 st.button("💾 Zapisz dane")
             else:
-                st.info("Najpierw wybierz dostawcę z listy.")
+                st.info("Najpierw wybierz dostawcę.")
 
     with c3:
         odp_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()))
 
-    # Rząd 2: Ticket, Statusy i Akcje
     c4, c5, c6 = st.columns([3, 2, 2])
     with c4:
         ticket_input = st.text_input("Ticket:", placeholder="Wpisz nr ticketu...")
@@ -121,18 +118,14 @@ with st.container(border=True):
         st.write("**Akcje:**")
         apply_btn = st.button("🚀 ZASTOSUJ FILTRY", type="primary")
 
-# --- LOGIKA FILTROWANIA ---
+# LOGIKA FILTROWANIA
 dostawcy_filtered = dostawcy_base
-
-# Filtrowanie po opiekunie
 if odp_sel:
     dostawcy_filtered = [d for d in dostawcy_base if d["opiekun"] in odp_sel]
-
-# Filtrowanie po wybranym dostawcy z Cascader
 if dostawca_sel:
     dostawcy_filtered = [d for d in dostawcy_filtered if d["firma"] == dostawca_sel]
 
-# 7. TAGI (Pod filtrami)
+# 7. TAGI
 st.write(f"**Aktywni Dostawcy ({len(dostawcy_filtered)}):**")
 tags_html = '<div class="tag-container">'
 for d in dostawcy_filtered:
@@ -141,20 +134,20 @@ for d in dostawcy_filtered:
 tags_html += '</div>'
 st.markdown(tags_html, unsafe_allow_html=True)
 
-# --- ZARZĄDZANIE TABELĄ ---
+# 8. ZARZĄDZANIE TABELĄ
 st.write("---")
 st.subheader("📊 Zarządzanie Tabelą")
 z1, z2 = st.columns([3, 1])
 
 with z1:
     all_columns = ["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny", "Zakupy", "Data Awizacji"]
-    selected_cols = st.multiselect("Wybierz kolumny tabeli:", all_columns, default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny"])
+    selected_cols = st.multiselect("Wybierz kolumny:", all_columns, default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny"])
 
 with z2:
     st.selectbox("Szablony widoku:", ["Standardowy", "Magazyn", "Finanse"])
-    st.button("💾 Zapisz widok jako szablon")
+    st.button("💾 Zapisz Szablon")
 
-# 9. WYŚWIETLANIE TABELI
+# 9. TABELA
 raw_data = []
 for i, d in enumerate(dostawcy_filtered):
     raw_data.append({
@@ -170,7 +163,3 @@ for i, d in enumerate(dostawcy_filtered):
 if raw_data:
     df = pd.DataFrame(raw_data)
     st.dataframe(df[selected_cols], use_container_width=True, hide_index=True)
-else:
-    st.warning("Brak wyników dla wybranych kryteriów.")
-
-st.info(f"Podgląd danych dla sekcji: {menu_selection}")
