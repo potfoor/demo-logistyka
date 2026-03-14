@@ -38,6 +38,7 @@ with st.sidebar:
                     sac.TreeItem('Moje dostawy'),
                     sac.TreeItem('Kalendarz'),
                 ]),
+            ]),    
         ],
         label='NAWIGACJA',
         index=0,
