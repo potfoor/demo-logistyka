@@ -13,8 +13,8 @@ osoby_kolory = {
     "Marek Woźniak": "#0288d1"       # Niebieski
 }
 
-# 3. LISTA DOSTAWCÓW (Twoja pełna lista)
-dostawcy_data = [
+# 3. PEŁNA LISTA DOSTAWCÓW
+dostawcy_base = [
     {"firma": "Logistics Hub Sp. z o.o.", "opiekun": "Jan Kowalski"},
     {"firma": "Trans-Port Solutions", "opiekun": "Anna Nowak"},
     {"firma": "Global Cargo Express", "opiekun": "Piotr Zieliński"},
@@ -47,16 +47,15 @@ dostawcy_data = [
     {"firma": "Master-Supply Solutions", "opiekun": "Anna Nowak"}
 ]
 
-# 4. CSS DLA STYLIZACJI
+# 4. CSS
 st.markdown("""
     <style>
     .tag-container { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 20px; }
     .tag { padding: 4px 10px; border-radius: 4px; font-size: 10px; color: white; font-weight: bold; text-transform: uppercase; }
-    .stButton > button { border-radius: 5px; }
     </style>
 """, unsafe_allow_html=True)
 
-# 5. PANEL BOCZNY (Drzewko)
+# 5. PANEL BOCZNY
 with st.sidebar:
     st.title("Panel Sterowania")
     menu_selection = sac.tree(
@@ -73,84 +72,86 @@ with st.sidebar:
         label='NAWIGACJA', open_all=True, size='sm'
     )
 
-# 6. GENEROWANIE GÓRNYCH TAGÓW (Kolory opiekunów)
+# 6. SEKCJA WYSZUKIWANIA (FILTRY) - Przeniesiona wyżej, aby wpływać na tagi
+st.subheader("🔍 Wyszukiwanie")
+with st.container(border=True):
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        dostawca_sel = st.selectbox("Dostawca:", ["Wszyscy"] + [d["firma"] for d in dostawcy_base])
+        ticket_input = st.text_input("Ticket:", placeholder="Wpisz numer...")
+    with col2:
+        # KLUCZOWY FILTR: Odpowiedzialny
+        odp_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()))
+    with col3:
+        st.write("**Statusy:**")
+        otwarte = st.checkbox("Otwarte", value=True)
+        zamkniete = st.checkbox("Zamknięte")
+    with col4:
+        st.write("**Akcje:**")
+        # Przycisk ZASTOSUJ teraz faktycznie filtruje
+        apply_filter = st.button("🚀 FILTRUJ / ZASTOSUJ", type="primary", use_container_width=True)
+
+# --- LOGIKA FILTROWANIA ---
+dostawcy_filtered = dostawcy_base
+
+# Jeśli wybrano osoby odpowiedzialne, filtrujemy listę
+if odp_sel:
+    dostawcy_filtered = [d for d in dostawcy_base if d["opiekun"] in odp_sel]
+
+# Dodatkowe filtrowanie po konkretnym dostawcy (selectbox)
+if dostawca_sel != "Wszyscy":
+    dostawcy_filtered = [d for d in dostawcy_filtered if d["firma"] == dostawca_sel]
+
+# 7. GENEROWANIE GÓRNYCH TAGÓW (Zależne od filtra)
+st.write("**Aktywni Dostawcy:**")
 tags_html = '<div class="tag-container">'
-for d in dostawcy_data:
+for d in dostawcy_filtered:
     kolor = osoby_kolory[d["opiekun"]]
     tags_html += f'<span class="tag" style="background-color: {kolor};">{d["firma"]}</span>'
 tags_html += '</div>'
 st.markdown(tags_html, unsafe_allow_html=True)
 
-# 7. SEKCJA WYSZUKIWANIA (FILTRY)
-st.subheader("🔍 Wyszukiwanie")
-with st.container(border=True):
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        lista_nazw = [d["firma"] for d in dostawcy_data]
-        dostawca_sel = st.selectbox("Dostawca:", ["Wszyscy"] + lista_nazw)
-        ticket = st.text_input("Ticket:", placeholder="Wpisz numer...")
-    with col2:
-        odp_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()))
-        flaga = st.multiselect("Flaga:", ["Import", "Krajowe", "Pilne"])
-    with col3:
-        st.write("**Statusy:**")
-        st.checkbox("Otwarte", value=True)
-        st.checkbox("Zamknięte")
-    with col4:
-        st.write("**Akcje Szybkie:**")
-        st.button("➕ Dodaj Dostawcę", use_container_width=True)
-        st.button("🚛 Dodaj Przewoźnika", use_container_width=True)
-        st.button("🔁 Zamówienia Cykliczne", use_container_width=True)
-
-# 8. PRZYWRÓCONA SEKCJA: ZARZĄDZANIE TABELĄ
+# 8. ZARZĄDZANIE TABELĄ
 st.write("---")
 st.subheader("📊 Zarządzanie Tabelą")
-
 col_manage1, col_manage2 = st.columns([2, 1])
 
 with col_manage1:
-    all_columns = ["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny", "Zakupy", "Data Awizacji", "Priorytet"]
-    # Mechanizm wyboru kolumn
-    selected_cols = st.multiselect("Wybierz kolumny tabeli:", all_columns, default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny"])
-    if st.button("✅ Zastosuj", type="primary"):
-        st.toast("Widok tabeli został zaktualizowany!")
+    all_columns = ["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny", "Zakupy", "Data Awizacji"]
+    selected_cols = st.multiselect("Wybierz kolumny:", all_columns, default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny"])
 
 with col_manage2:
-    # Szablony i przyciski akcji
-    st.selectbox("Szablony widoku:", ["Standardowy", "Dla Magazynu", "Finansowy", "Moje ulubione"])
-    c_btn1, c_btn2 = st.columns(2)
-    c_btn1.button("💾 Zapisz", use_container_width=True)
-    c_btn2.button("↕️ Kolejność", use_container_width=True)
+    st.selectbox("Szablony widoku:", ["Standardowy", "Dla Magazynu", "Finansowy"])
+    st.button("💾 Zapisz Szablon", use_container_width=True)
 
-# 9. TABELA DANYCH
-st.write("---")
+# 9. TABELA DANYCH (Filtrowana)
 raw_table_data = []
-for i, d in enumerate(dostawcy_data):
+for i, d in enumerate(dostawcy_filtered):
     raw_table_data.append({
         "Lp.": i + 1,
         "Dostawca": d["firma"],
-        "Nr dostawy": f"{i+100}/2024",
+        "Nr dostawy": f"{i+102}/2024",
         "Status": "SKŁAD" if i % 2 == 0 else "W DRODZE",
         "Odpowiedzialny": d["opiekun"],
-        "Zakupy": "Gotowy",
-        "Data Awizacji": "2024-03-20",
-        "Priorytet": "Normalny",
+        "Zakupy": "Zatwierdzone",
+        "Data Awizacji": "2024-03-25",
         "color_hex": osoby_kolory[d["opiekun"]] 
     })
 
 df = pd.DataFrame(raw_table_data)
 
-# Funkcja stylizująca wiersze na podstawie koloru opiekuna
 def style_row(row):
     color = row["color_hex"]
     return [f'background-color: {color}; color: white;' for _ in row]
 
-# Wyświetlanie z zachowaniem dynamicznych kolumn
-st.dataframe(
-    df[selected_cols + ["color_hex"]].style.apply(style_row, axis=1),
-    use_container_width=True,
-    hide_index=True,
-    column_config={"color_hex": None} # Ukrycie kolumny technicznej
-)
+if not df.empty:
+    st.dataframe(
+        df[selected_cols + ["color_hex"]].style.apply(style_row, axis=1),
+        use_container_width=True,
+        hide_index=True,
+        column_config={"color_hex": None}
+    )
+else:
+    st.warning("Brak danych dla wybranych filtrów.")
 
-st.info(f"Podsumowanie: Widok zawiera towary przypisane do sekcji {menu_selection}")
+st.info(f"Wyświetlono {len(dostawcy_filtered)} dostawców.")
