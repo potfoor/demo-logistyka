@@ -1,6 +1,3 @@
-Oto kompletny, poprawiony kod aplikacji. W sekcji tabeli wprowadzono kluczowe zmiany: funkcja stylizująca używa bezpiecznego dostępu do danych (`row.get()`), a kolumna techniczna "Kolor" jest ukrywana dopiero przy renderowaniu widoku. Dzięki temu unikniemy błędu `AttributeError` i problemu z brakującą kolumną podczas formatowania.
-
-```python
 import streamlit as st
 import pandas as pd
 import streamlit_antd_components as sac
