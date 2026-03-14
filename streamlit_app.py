@@ -87,13 +87,9 @@ with col_right:
         f_row2[2].date_input("Data odcięcia:")
         st.button("USTAWIENIA ZAAWANSOWANE", use_container_width=True)
 
-# 6. TABELA DANYCH "MOJE DOSTAWY"
+# --- 6. TABELA DANYCH "MOJE DOSTAWY" ---
 st.subheader(f"MOJE DOSTAWY - Widok: {menu_selection}")
 
-# 6. TABELA DANYCH "MOJE DOSTAWY"
-st.subheader(f"MOJE DOSTAWY - Widok: {menu_selection}")
-
-# Przykładowe dane
 df_data = pd.DataFrame([
     {"Lp.": 1, "Dostawca": "ASG", "Nr dostawy": "14/23", "Status": "BR", "Zakupy": "Brak danych", "Kolor": "#f8d7da"},
     {"Lp.": 2, "Dostawca": "BARREL OPTICS", "Nr dostawy": "1/24-sampl", "Status": "Zamówiono", "Zakupy": "Brak danych", "Kolor": "#ffffff"},
@@ -102,25 +98,23 @@ df_data = pd.DataFrame([
     {"Lp.": 5, "Dostawca": "ZIRI", "Nr dostawy": "4/24", "Status": "SKŁAD", "Zakupy": "Gotowy", "Kolor": "#d4edda"},
 ])
 
-# POPRAWIONA FUNKCJA STYLIZUJĄCA
+# Zapisz mapę kolorów PRZED usunięciem kolumny
+color_map = df_data["Kolor"].tolist()
+
+# Usuń kolumnę Kolor z danych do wyświetlenia
+df_display = df_data.drop(columns=["Kolor"])
+
+# Funkcja stylizująca - korzysta z zewnętrznej listy kolorów (closure)
 def style_row(row):
-    # Pobieramy kolor z kolumny 'Kolor' dla każdego wiersza
-    color = row['Kolor']
-    # Nakładamy ten kolor na wszystkie komórki w tym wierszu
-    return [f'background-color: {color}' for _ in row]
+    color = color_map[row.name]  # row.name = indeks wiersza (0, 1, 2...)
+    return [f'background-color: {color}'] * len(row)
 
-# STYLIZUJEMY CAŁY DATAFRAME, A POTEM UKRYWAMY KOLUMNĘ 'Kolor'
-styled_df = df_data.style.apply(style_row, axis=1)
+# Nałóż style na CZYSTY dataframe (bez kolumny Kolor)
+styled_df = df_display.style.apply(style_row, axis=1)
 
-# Wyświetlanie z ukryciem kolumny technicznej
+# Wyświetl
 st.dataframe(
     styled_df,
-    column_config={
-        "Kolor": None  # To sprawi, że kolumna 'Kolor' będzie niewidoczna dla użytkownika
-    },
     use_container_width=True,
     hide_index=True
 )
-
-
-st.info(f"Podsumowanie: Znaleziono towary dla sekcji {menu_selection} (> 1000 pozycji)")
