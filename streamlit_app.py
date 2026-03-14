@@ -89,7 +89,7 @@ with col_right:
 # --- 6. TABELA DANYCH "MOJE DOSTAWY" ---
 st.subheader(f"MOJE DOSTAWY - Widok: {menu_selection}")
 
-# Twoje dane
+# 1. Dane (upewnij się, że ta nazwa df_data nie jest nadpisana nigdzie indziej)
 df_data = pd.DataFrame([
     {"Lp.": 1, "Dostawca": "ASG", "Nr dostawy": "14/23", "Status": "BR", "Zakupy": "Brak danych", "Kolor": "#f8d7da"},
     {"Lp.": 2, "Dostawca": "BARREL OPTICS", "Nr dostawy": "1/24-sampl", "Status": "Zamówiono", "Zakupy": "Brak danych", "Kolor": "#ffffff"},
@@ -98,23 +98,23 @@ df_data = pd.DataFrame([
     {"Lp.": 5, "Dostawca": "ZIRI", "Nr dostawy": "4/24", "Status": "SKŁAD", "Zakupy": "Gotowy", "Kolor": "#d4edda"},
 ])
 
-# Funkcja stylizująca - korzystamy z bezpiecznego zapisu row['Kolor']
+# 2. Bezpieczna funkcja stylizująca
 def style_row(row):
+    # Pobieramy kolor bezpośrednio z wiersza
     color = row['Kolor']
     return [f'background-color: {color}' for _ in row]
 
-# KROK 1: Nakładamy style na PEŁNY dataframe (z kolumną Kolor)
+# 3. Nakładamy style na PEŁNY dataframe (nie usuwamy kolumny Kolor!)
 styled_df = df_data.style.apply(style_row, axis=1)
 
-# KROK 2: Wyświetlamy, ukrywając kolumnę 'Kolor' w konfiguracji (column_config)
-# UWAGA: Tutaj nie używamy .drop()!
+# 4. Wyświetlamy tabelę, ukrywając kolumnę technologiczną w ustawieniach widoku
 st.dataframe(
     styled_df,
     use_container_width=True,
     hide_index=True,
     column_config={
-        "Kolor": None  # To jest kluczowe - kolumna jest w kodzie, ale niewidoczna w przeglądarce
+        "Kolor": None  # To klucz: Kolor istnieje dla kodu, ale jest niewidoczny dla użytkownika
     }
 )
 
-st.info(f"Podsumowanie: Znaleziono towary dla sekcji {menu_selection} (> 1000 pozycji)")
+st.info(f"Podsumowanie: Znaleziono towary dla sekcji {menu_selection}")
