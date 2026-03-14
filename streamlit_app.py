@@ -1,121 +1,87 @@
 import streamlit as st
 import pandas as pd
-import streamlit_antd_components as sac
 
-# 1. Konfiguracja strony
-st.set_page_config(layout="wide", page_title="System Zarządzania Dostawami", page_icon="📦")
+# Konfiguracja strony
+st.set_page_config(layout="wide", page_title="System Zarządzania Dostawami")
 
-# 2. CSS dla stylizacji wizualnej
+# --- STYLE CSS (dla kolorowych przycisków i estetyki) ---
 st.markdown("""
     <style>
+    .stButton>button { width: 100%; border-radius: 5px; }
     .tag-container { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 20px; }
     .tag { padding: 4px 10px; border-radius: 4px; font-size: 12px; color: white; font-weight: bold; }
-    .stDataFrame { border: 1px solid #e6e9ef; border-radius: 5px; }
-    [data-testid="stSidebar"] { background-color: #f0f2f6; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. PASEK BOCZNY - Drzewko menu
+# --- PASEK BOCZNY (Sidebar) ---
 with st.sidebar:
-    st.title("Panel Sterowania")
-    
-    menu_selection = sac.tree(
-        items=[
-            sac.TreeItem('ZAMÓWIENIA', icon='box', children=[
-                sac.TreeItem('Powiadomienia', icon='bell', children=[
-                    sac.TreeItem('Aktywne'),
-                ]),
-                sac.TreeItem('Ticket', icon='ticket-perforated', children=[
-                    sac.TreeItem('Moje dostawy'),
-                    sac.TreeItem('Wszystkie dostawy'),
-                    sac.TreeItem('Odprawa celna'),
-                    sac.TreeItem('Problemy dostaw'),
-                ]),
-                sac.TreeItem('Awizacja', icon='calendar-check', children=[
-                    sac.TreeItem('Moje dostawy'),
-                    sac.TreeItem('Kalendarz'),
-                ]),
-            ]),
-        ],
-        label='NAWIGACJA',
-        index=0,
-        open_all=True,
-        size='sm',
-    )
+    st.title("Maszynoplik")
+    st.selectbox("Filtry produktów", ["Wszystkie", "Aktywne", "Archiwum"])
+    st.selectbox("Operacje", ["Dodaj produkt", "Zestawy"])
+    st.selectbox("CenoPlik", ["Ceny produktów", "Rodzaje cen"])
+    st.selectbox("Import", ["Excel", "Kolejka", "Historia"])
 
-# 4. GÓRNE TAGI
+# --- GÓRNE TAGI (Zakładki/Kategorie) ---
 st.markdown("""
     <div class="tag-container">
-        <span class="tag" style="background-color: #333;">#01 MEDIA</span>
-        <span class="tag" style="background-color: #8db600;">2020 Supplies</span>
-        <span class="tag" style="background-color: #8db600;">4Shooter</span>
-        <span class="tag" style="background-color: #2e7d32;">5.11</span>
-        <span class="tag" style="background-color: #ff5722;">ABEKOM</span>
-        <span class="tag" style="background-color: #0288d1;">ABISAL</span>
-        <span class="tag" style="background-color: #0097a7;">ABSOLUTUS</span>
-        <span class="tag" style="background-color: #2e7d32;">ACCELENT</span>
-        <span class="tag" style="background-color: #ff5722;">ACERBI</span>
-        <span class="tag" style="background-color: #0288d1;">ACP sPORT</span>
-        <span class="tag" style="background-color: #0097a7;">ACTION HOLSTERS</span>
+        <span class="tag" style="background-color: #555;">#01 MEDIA</span>
+        <span class="tag" style="background-color: #8db600;">#4F AW'23</span>
+        <span class="tag" style="background-color: #8db600;">#4F AW'24</span>
+        <span class="tag" style="background-color: #2e7d32;">#4F GR.F</span>
+        <span class="tag" style="background-color: #ff5722;">#4SHOOTER</span>
+        <span class="tag" style="background-color: #0288d1;">#A ZESTAWY</span>
     </div>
 """, unsafe_allow_html=True)
 
-# 5. FILTRY
-col_left, col_right = st.columns([1, 2])
+# --- SEKCE FILTRÓW (Expander) ---
+col_f1, col_f2 = st.columns([1, 2])
 
-with col_left:
+with col_f1:
     with st.expander("🔍 Filtry - Unikalne", expanded=True):
-        st.text_input("SKU:", key="sku_input")
+        st.text_input("SKU:")
+        st.text_input("Kod:")
         st.checkbox("Pokaż warianty", value=True)
-        f_btns = st.columns(3)
-        f_btns[0].button("FILTRUJ", type="primary", use_container_width=True)
-        f_btns[1].button("ZAKŁADKĘ", use_container_width=True)
-        f_btns[2].button("🔄", use_container_width=True)
+        c1, c2, c3 = st.columns(3)
+        c1.button("Filtruj", type="primary")
+        c2.button("Zakładkę")
+        c3.button("Resetuj")
 
-with col_right:
+with col_f2:
     with st.expander("📂 Filtry - Wielowybór", expanded=True):
-        f_row1 = st.columns(3)
-        f_row1[0].selectbox("Zakładka:", ["Wszystkie", "Magazyn Główny", "Outlet"])
-        f_row1[1].multiselect("Grupy:", ["Grupa A", "Grupa B", "Grupa C"])
-        f_row1[2].selectbox("Typ PIM:", ["Dowolny", "Zdefiniowany"])
+        f_c1, f_c2, f_c3 = st.columns(3)
+        f_c1.selectbox("Zakładka:", ["Wybierz...", "Magazyn A", "Magazyn B"])
+        f_c2.multiselect("Grupy:", ["Grupa 1", "Grupa 2"])
+        f_c3.selectbox("Typ PIM:", ["Dowolny", "Zdefiniowany"])
         
-        f_row2 = st.columns(3)
-        f_row2[0].text_input("Kod obcy:")
-        f_row2[1].text_input("Nazwa produktu:")
-        f_row2[2].date_input("Data odcięcia:")
-        st.button("USTAWIENIA ZAAWANSOWANE", use_container_width=True)
+        f_c4, f_c5, f_c6 = st.columns(3)
+        f_c4.text_input("Nazwa:")
+        f_c5.date_input("Odcięcie od:")
+        f_c6.date_input("do:")
+        st.button("FILTRUJ ZAAWANSOWANE")
 
-# 6. TABELA DANYCH
-st.subheader(f"MOJE DOSTAWY - Widok: {menu_selection}")
+# --- WYBÓR KOLUMN ---
+with st.expander("📊 Wybierz kolumny tabeli"):
+    st.multiselect("Kolumny towaru:", ["Kod", "EAN", "Waga", "Katalog"], default=["Kod", "EAN"])
+    st.multiselect("Porównywarki:", ["Ceneo", "Google", "Empik"])
 
-# Dane z kolumną techniczną Kolor
-df_data = pd.DataFrame([
-    {"Lp.": 1, "Dostawca": "ASG",            "Nr dostawy": "14/23",      "Status": "BR",           "Zakupy": "Brak danych",    "Kolor": "#f8d7da"},
-    {"Lp.": 2, "Dostawca": "BARREL OPTICS",  "Nr dostawy": "1/24-sampl", "Status": "Zamówiono",    "Zakupy": "Brak danych",    "Kolor": "#ffffff"},
-    {"Lp.": 3, "Dostawca": "WYDAWNICTWO X",  "Nr dostawy": "7/24",       "Status": "SKŁAD",        "Zakupy": "W przygotowaniu","Kolor": "#d4edda"},
-    {"Lp.": 4, "Dostawca": "Darek",          "Nr dostawy": "1/24",       "Status": "Zrealizowane", "Zakupy": "Brak danych",    "Kolor": "#ffffff"},
-    {"Lp.": 5, "Dostawca": "ZIRI",           "Nr dostawy": "4/24",       "Status": "SKŁAD",        "Zakupy": "Gotowy",         "Kolor": "#d4edda"},
-])
+# --- TABELA DANYCH (Moje Dostawy) ---
+st.subheader("MOJE DOSTAWY")
 
-# Zapisz kolory PRZED usunięciem kolumny technicznej
-color_map = df_data["Kolor"].tolist()
+# Przykładowe dane odzwierciedlające zdjęcie
+data = {
+    "Lp.": [1, 2, 3, 4, 5],
+    "Dostawca": ["ABC", "BARREL OPTICS", "WYDAWNICTWO X", "Darek", "ASG"],
+    "Nr dostawy": ["14/23", "1/24-sampl", "7/24", "1/24", "13/20"],
+    "Data": ["17-03-2024", "12-01-2024", "12-01-2024", "-", "05-03-2024"],
+    "Priorytet": ["Normalny", "Normalny", "Normalny", "Normalny", "Normalny"],
+    "Status": ["BR", "Zamówiono", "SKŁAD", "Zrealizowano", "BR"],
+    "Zakupy": ["Brak danych", "Brak danych", "W przygotowaniu", "Brak danych", "Gotowy"]
+}
 
-# Usuń kolumnę techniczną z danych do wyświetlenia
-df_display = df_data.drop(columns=["Kolor"])
+df = pd.DataFrame(data)
 
-# Funkcja stylizująca - pobiera kolor z zewnętrznej listy przez indeks wiersza
-def style_row(row):
-    color = color_map[row.name]
-    return [f'background-color: {color}'] * len(row)
+# Wyświetlenie tabeli z interaktywnymi funkcjami
+st.dataframe(df, use_container_width=True, hide_index=True)
 
-# Nałóż style na czysty dataframe (bez kolumny Kolor)
-styled_df = df_display.style.apply(style_row, axis=1)
-
-# Wyświetl tabelę
-st.dataframe(
-    styled_df,
-    use_container_width=True,
-    hide_index=True
-)
-
-st.info(f"Podsumowanie: Znaleziono towary dla sekcji '{menu_selection}'")
+# Pasek statusu na dole
+st.info("Znaleziono towary: > 1000")
