@@ -60,17 +60,15 @@ st.markdown("""
 # 5. PANEL BOCZNY (Drzewko)
 with st.sidebar:
     st.title("Panel Sterowania")
-    # Poprawione TreeItem na label=
+    # Używamy prostszej listy słowników dla drzewka (bardziej kompatybilne)
     menu_selection = sac.tree(
         items=[
-            sac.TreeItem(label='Zamówienia', icon='box', children=[
-                sac.TreeItem(label='Powiadomienia', icon='bell', children=[sac.TreeItem(label='Aktywne')]),
-                sac.TreeItem(label='Ticket', icon='ticket-perforated', children=[
-                    sac.TreeItem(label='Moje Dostawy'), sac.TreeItem(label='Wszystkie Dostawy'),
-                    sac.TreeItem(label='Odprawa Celna'), sac.TreeItem(label='Problemy Dostaw')
-                ]),
-                sac.TreeItem(label='Awizacja', icon='calendar-event', children=[sac.TreeItem(label='Kalendarz')]),
-            ]),
+            {'label': 'Zamówienia', 'icon': 'box', 'children': [
+                {'label': 'Powiadomienia', 'icon': 'bell'},
+                {'label': 'Ticket', 'icon': 'ticket-perforated', 'children': [
+                    {'label': 'Moje Dostawy'}, {'label': 'Wszystkie Dostawy'}
+                ]},
+            ]},
         ], label='NAWIGACJA', open_all=True, size='sm'
     )
 
@@ -81,15 +79,19 @@ with st.container(border=True):
     c1, c2, c3 = st.columns([3, 1, 3])
     
     with c1:
-        # POPRAWKA: Dodano jawne label= dla każdego CascaderItem
-        dostawca_sel = sac.cascader(
+        # BEZPIECZNA WERSJA: Przekazujemy listę nazw zamiast obiektów CascaderItem
+        # Dodajemy ikonę karty jako tekstową atrapę obok nazwy firmy
+        lista_dostawcow_z_ikonami = [f"📇 {d['firma']}" for d in dostawcy_base]
+        dostawca_wybrany_raw = sac.cascader(
             label='Dostawca:',
-            items=[sac.CascaderItem(label=d['firma'], icon='person-vcard') for d in dostawcy_base],
+            items=lista_dostawcow_z_ikonami,
             placeholder='Wybierz dostawcę...',
             search=True,
             clearable=True,
             size='sm'
         )
+        # Oczyszczamy nazwę z ikony do filtrowania
+        dostawca_sel = dostawca_wybrany_raw.replace("📇 ", "") if dostawca_wybrany_raw else None
     
     with c2:
         with st.popover("📇 Karta"):
@@ -97,11 +99,9 @@ with st.container(border=True):
                 st.subheader(f"Szczegóły: {dostawca_sel}")
                 st.text_input("Osoba kontaktowa:", "Jan Nowak")
                 st.text_input("B2B URL:", "https://b2b.logistyka.pl")
-                st.text_input("Login:", "user_b2b")
-                st.text_input("Hasło:", type="password", value="demo123")
                 st.button("💾 Zapisz dane")
             else:
-                st.info("Najpierw wybierz dostawcę.")
+                st.info("Wybierz dostawcę.")
 
     with c3:
         odp_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()))
@@ -140,12 +140,12 @@ st.subheader("📊 Zarządzanie Tabelą")
 z1, z2 = st.columns([3, 1])
 
 with z1:
-    all_columns = ["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny", "Zakupy", "Data Awizacji"]
-    selected_cols = st.multiselect("Wybierz kolumny:", all_columns, default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny"])
+    all_columns = ["Lp.", "Dostawca", "Nr dostawy", "Status", "Odpowiedzialny", "Zakupy"]
+    selected_cols = st.multiselect("Kolumny:", all_columns, default=["Lp.", "Dostawca", "Status", "Odpowiedzialny"])
 
 with z2:
-    st.selectbox("Szablony widoku:", ["Standardowy", "Magazyn", "Finanse"])
-    st.button("💾 Zapisz Szablon")
+    st.selectbox("Szablony:", ["Standard", "Magazyn"])
+    st.button("💾 Zapisz")
 
 # 9. TABELA
 raw_data = []
@@ -156,8 +156,7 @@ for i, d in enumerate(dostawcy_filtered):
         "Nr dostawy": f"{i+102}/2024",
         "Status": "SKŁAD" if i % 2 == 0 else "W DRODZE",
         "Odpowiedzialny": d["opiekun"],
-        "Zakupy": "Zatwierdzone",
-        "Data Awizacji": "2024-03-25"
+        "Zakupy": "OK"
     })
 
 if raw_data:
