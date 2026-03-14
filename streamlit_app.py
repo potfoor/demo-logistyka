@@ -24,9 +24,7 @@ with st.sidebar:
         items=[
             sac.TreeItem('ZAMÓWIENIA', icon='box', children=[
                 sac.TreeItem('Powiadomienia', icon='bell', children=[
-                    sac.TreeItem('Wszystkie'),
                     sac.TreeItem('Aktywne'),
-                    sac.TreeItem('Archiwum'),
                 ]),
                 sac.TreeItem('Ticket', icon='ticket-perforated', children=[
                     sac.TreeItem('Moje dostawy'),
