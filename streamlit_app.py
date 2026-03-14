@@ -12,8 +12,6 @@ osoby_kolory = {
     "Piotr Zieliński": "#ff5722",
     "Marek Woźniak": "#0288d1"
 }
-
-# Symulacja zalogowanego użytkownika
 ZALOGOWANY_UZYTKOWNIK = "Jan Kowalski"
 
 # 3. BAZA DOSTAWCÓW (Twoja lista 30 firm)
@@ -33,7 +31,7 @@ dostawcy_base = [
     for i, nazwa in enumerate(lista_firm)
 ]
 
-# 4. CSS
+# 4. CSS DLA IDEALNEGO UKŁADU
 st.markdown("""
     <style>
     .tag-container { display: flex; flex-wrap: wrap; gap: 4px; padding-bottom: 20px; }
@@ -45,13 +43,12 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 5. PANEL BOCZNY I LOGIKA NAWIGACJI
+# 5. PANEL BOCZNY
 with st.sidebar:
     st.title("🚚 Logistyka App")
     st.write(f"Zalogowany: **{ZALOGOWANY_UZYTKOWNIK}**")
     st.divider()
     
-    # Menu boczne
     menu_selected = sac.tree(
         items=[
             sac.TreeItem('Dashboard', icon='speedometer2'),
@@ -66,28 +63,23 @@ with st.sidebar:
         ], label='NAWIGACJA', open_all=True, size='sm'
     )
 
-# --- LOGIKA FILTROWANIA NA PODSTAWIE PANELU BOCZNEGO ---
-# Jeśli wybrano "Moje Dostawy", wymuś filtr na zalogowanego użytkownika
-if menu_selected == 'Moje Dostawy':
-    st.session_state.o_sel = [ZALOGOWANY_UZYTKOWNIK]
-    st.session_state.d_sel = "Wszyscy"
-elif menu_selected == 'Wszystkie Dostawy':
-    st.session_state.o_sel = [] # Reset filtrów
-    st.session_state.d_sel = "Wszyscy"
-
-# Inicjalizacja stanów dla selectboxów, jeśli nie istnieją
+# --- LOGIKA SESJI I FILTROWANIA ---
 if 'o_sel' not in st.session_state: st.session_state.o_sel = []
 if 'd_sel' not in st.session_state: st.session_state.d_sel = "Wszyscy"
 
-# Zastosowanie filtrów do danych
+if menu_selected == 'Moje Dostawy':
+    st.session_state.o_sel = [ZALOGOWANY_UZYTKOWNIK]
+elif menu_selected == 'Wszystkie Dostawy':
+    st.session_state.o_sel = []
+
 dostawcy_filtered = dostawcy_base
 if st.session_state.o_sel:
     dostawcy_filtered = [d for d in dostawcy_base if d["opiekun"] in st.session_state.o_sel]
 if st.session_state.d_sel != "Wszyscy":
     dostawcy_filtered = [d for d in dostawcy_filtered if d["firma"] == st.session_state.d_sel]
 
-# --- 6. AKTYWNI DOSTAWCY (GÓRA) ---
-st.write(f"**Aktywni Dostawcy ({'MOJE' if menu_selected == 'Moje Dostawy' else 'WSZYSTKIE'}):**")
+# --- 6. AKTYWNI DOSTAWCY (NA GÓRZE) ---
+st.write(f"**Aktywni Dostawcy:**")
 tags_html = '<div class="tag-container">'
 for d in dostawcy_filtered:
     kolor = osoby_kolory.get(d["opiekun"], "#cccccc")
@@ -95,23 +87,20 @@ for d in dostawcy_filtered:
 tags_html += '</div>'
 st.markdown(tags_html, unsafe_allow_html=True)
 
-# --- 7. SEKCJA WYSZUKIWANIE ---
+# --- 7. WYSZUKIWANIE ---
 st.header("🔍 Wyszukiwanie")
 with st.container(border=True):
     c1, c2, c3 = st.columns([3, 1, 3])
     with c1:
-        # Selectbox reaguje na st.session_state zmieniany przez menu boczne
-        st.session_state.d_sel = st.selectbox("Dostawca:", ["Wszyscy"] + [d["firma"] for d in dostawcy_base], 
-                                              index=0 if st.session_state.d_sel == "Wszyscy" else [d["firma"] for d in dostawcy_base].index(st.session_state.d_sel)+1)
+        st.session_state.d_sel = st.selectbox("Dostawca:", ["Wszyscy"] + [d["firma"] for d in dostawcy_base])
     with c2:
         with st.popover("📇 Karta"): st.write("Dane kontaktowe")
     with c3:
-        # Multiselect reaguje na kliknięcie w "Moje Dostawy"
         st.session_state.o_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()), default=st.session_state.o_sel)
 
     c4, c5, c6, c7 = st.columns([3, 3, 2, 2])
-    with c4: st.text_input("Ticket:", placeholder="Wpisz numer...")
-    with c5: st.multiselect("Flaga:", ["PILNE", "POWTÓRKA"])
+    with c4: st.text_input("Ticket:", placeholder="Nr ticketu...")
+    with c5: st.multiselect("Flaga:", ["PILNE", "POWTÓRKA", "REKLAMACJA"])
     with c6:
         st.write("**Statusy:**")
         st.checkbox("Otwarte", value=True)
@@ -127,53 +116,38 @@ with st.container(border=True):
     b2.button("🚛 Dodaj Przewoźnika")
     b3.button("🔄 Zamówienia Cykliczne")
 
-# --- 8. ZARZĄDZANIE TABELĄ I TABELA ---
+# --- 8. ZARZĄDZANIE TABELĄ (PEŁNA LISTA KOLORÓW) ---
 st.write("---")
-st.subheader(f"📊 Tabela Dostaw: {menu_selected if menu_selected else 'Dashboard'}")
+st.subheader(f"📊 Tabela: {menu_selected if menu_selected else 'Dashboard'}")
 
-wszystkie_kolumny = ["Lp.", "Dostawca", "Nr dostawy", "HWO", "Data aw. OD", "Status", "Zakupy", "Waga", "Opiekun", "Aktualizacja"]
-selected_cols = st.multiselect("Pokaż kolumny:", wszystkie_kolumny, default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Opiekun"])
+wszystkie_kolumny = [
+    "Lp.", "Dostawca", "Nr dostawy", "HWO", "Data aw. OD", "Data aw. DO", 
+    "Priorytet", "Status", "Zakupy", "Kurier", "List", 
+    "Brak AW", "Brak FV", "Cen", "New", "Waga", "Knt", "Pal", "Box", "Opiekun", "Aktualizacja"
+]
 
-raw_data = []
-for i, d in enumerate(dostawcy_filtered):
-    raw_data.append({
-        "Lp.": i + 1,
-        "Dostawca": d["firma"],
-        "Nr dostawy": f"{100+i}/26",
-        "HWO": "12-03-2026",
-        "Data aw. OD": "12-03-2026",
-        "Status": "SKŁAD" if i % 2 == 0 else "Zamówione",
-        "Zakupy": "OK",
-        "Waga": "200kg",
-        "Opiekun": d["opiekun"],
-        "Aktualizacja": "2026-03-14"
-    })
+selected_cols = st.multiselect("Pokaż kolumny:", wszystkie_kolumny, 
+                              default=["Lp.", "Dostawca", "Nr dostawy", "Status", "Zakupy", "Waga", "Opiekun", "Aktualizacja"])
 
-if raw_data:
-    df = pd.DataFrame(raw_data)
-    st.dataframe(df[selected_cols], use_container_width=True, hide_index=True)
-else:
-    st.warning("Brak dostaw przypisanych do Twojego konta.")
-
-# 9. GENEROWANIE DANYCH (Pełne 21 kolumn jak na wzorze)
+# --- 9. GENEROWANIE DANYCH (WSZYSTKIE KOLUMNY) ---
 raw_data = []
 for i, d in enumerate(dostawcy_filtered):
     raw_data.append({
         "Lp.": i + 1,
         "Dostawca": d["firma"],
         "Nr dostawy": f"{14+i}/26 🔗",
-        "HWO": "12-03-2026",
+        "HWO": "12-03-2026" if i % 2 == 0 else "",
         "Data aw. OD": "12-03-2026",
         "Data aw. DO": "",
         "Priorytet": "Normalny",
-        "Status": "SKŁAD" if i == 2 else "Zamówione",
-        "Zakupy": "W przygotowaniu" if i == 2 else "Brak danych",
+        "Status": "SKŁAD" if i % 3 == 0 else "Zamówione",
+        "Zakupy": "W przygotowaniu" if i % 3 == 0 else "Brak danych",
         "Kurier": "Virtus Logistics",
         "List": "/",
         "Brak AW": "/",
         "Brak FV": "Nie",
         "Cen": "Nie",
-        "New": "Tak" if i == 2 else "Nie",
+        "New": "Nie",
         "Waga": "150kg",
         "Knt": "/",
         "Pal": "1",
@@ -189,13 +163,11 @@ if raw_data:
         use_container_width=True,
         hide_index=True,
         column_config={
-            "Lp.": st.column_config.Column(width=40),
+            "Lp.": st.column_config.Column(width=40), # Sztywny odstęp Lp.
             "Dostawca": st.column_config.Column(width=200),
             "Nr dostawy": st.column_config.Column(width=130),
-            "Status": st.column_config.Column(width=100),
             "Waga": st.column_config.Column(width=70),
             "Pal": st.column_config.Column(width=45),
             "Box": st.column_config.Column(width=45),
-            "Aktualizacja": st.column_config.Column(width=160),
         }
     )
