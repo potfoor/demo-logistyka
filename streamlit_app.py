@@ -122,14 +122,5 @@ st.dataframe(
     hide_index=True
 )
 
-# Funkcja do stylizacji wierszy
-def style_row(row):
-    return [f'background-color: {row.Kolor}' for _ in row]
-
-st.dataframe(
-    df_data.drop(columns=["Kolor"]).style.apply(style_row, axis=1),
-    use_container_width=True,
-    hide_index=True
-)
 
 st.info(f"Podsumowanie: Znaleziono towary dla sekcji {menu_selection} (> 1000 pozycji)")
