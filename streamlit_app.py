@@ -5,7 +5,7 @@ import streamlit_antd_components as sac
 # 1. Konfiguracja strony
 st.set_page_config(layout="wide", page_title="System Zarządzania Dostawami", page_icon="📦")
 
-# 2. CSS dla stylizacji wizualnej (kolory tagów i tabeli)
+# 2. CSS dla stylizacji wizualnej
 st.markdown("""
     <style>
     .tag-container { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 20px; }
@@ -19,28 +19,22 @@ st.markdown("""
 with st.sidebar:
     st.title("Panel Sterowania")
     
-    # Drzewko menu (zamiast selectboxów)
     menu_selection = sac.tree(
         items=[
             sac.TreeItem('ZAMÓWIENIA', icon='box', children=[
                 sac.TreeItem('Powiadomienia', icon='bell', children=[
-                    sac.TreeItem('Wszystkie'),
                     sac.TreeItem('Aktywne'),
-                    sac.TreeItem('Archiwum'),
                 ]),
                 sac.TreeItem('Ticket', icon='ticket-perforated', children=[
-                    sac.TreeItem('Dodaj produkt'),
-                    sac.TreeItem('Zestawy produktów'),
+                    sac.TreeItem('Moje dostawy'),
+                    sac.TreeItem('Wszystkie dostawy'),
+                    sac.TreeItem('Odprawa celna'),
+                    sac.TreeItem('Problemy dostaw'),
                 ]),
                 sac.TreeItem('Awizacja', icon='calendar-check', children=[
-                    sac.TreeItem('Ceny produktów'),
-                    sac.TreeItem('Rodzaje cen'),
+                    sac.TreeItem('Moje dostawy'),
+                    sac.TreeItem('Kalendarz'),
                 ]),
-            ]),
-            sac.TreeItem('IMPORT', icon='cloud-arrow-down', children=[
-                sac.TreeItem('Import Excel'),
-                sac.TreeItem('Kolejka importów'),
-                sac.TreeItem('Historia'),
             ]),
         ],
         label='NAWIGACJA',
@@ -49,20 +43,24 @@ with st.sidebar:
         size='sm',
     )
 
-# 4. GÓRNE TAGI (Odwzorowanie kolorowych zakładek ze zdjęcia)
+# 4. GÓRNE TAGI
 st.markdown("""
     <div class="tag-container">
         <span class="tag" style="background-color: #333;">#01 MEDIA</span>
-        <span class="tag" style="background-color: #8db600;">#4F AW'23</span>
-        <span class="tag" style="background-color: #8db600;">#4F AW'24</span>
-        <span class="tag" style="background-color: #2e7d32;">#4F GR.F</span>
-        <span class="tag" style="background-color: #ff5722;">#4SHOOTER</span>
-        <span class="tag" style="background-color: #0288d1;">#A ZESTAWY</span>
-        <span class="tag" style="background-color: #0097a7;">#ABISAL</span>
+        <span class="tag" style="background-color: #8db600;">2020 Supplies</span>
+        <span class="tag" style="background-color: #8db600;">4Shooter</span>
+        <span class="tag" style="background-color: #2e7d32;">5.11</span>
+        <span class="tag" style="background-color: #ff5722;">ABEKOM</span>
+        <span class="tag" style="background-color: #0288d1;">ABISAL</span>
+        <span class="tag" style="background-color: #0097a7;">ABSOLUTUS</span>
+        <span class="tag" style="background-color: #2e7d32;">ACCELENT</span>
+        <span class="tag" style="background-color: #ff5722;">ACERBI</span>
+        <span class="tag" style="background-color: #0288d1;">ACP sPORT</span>
+        <span class="tag" style="background-color: #0097a7;">ACTION HOLSTERS</span>
     </div>
 """, unsafe_allow_html=True)
 
-# 5. FILTRY (Układ kolumnowy)
+# 5. FILTRY
 col_left, col_right = st.columns([1, 2])
 
 with col_left:
@@ -87,36 +85,37 @@ with col_right:
         f_row2[2].date_input("Data odcięcia:")
         st.button("USTAWIENIA ZAAWANSOWANE", use_container_width=True)
 
-# --- 6. TABELA DANYCH "MOJE DOSTAWY" ---
+# 6. TABELA DANYCH
 st.subheader(f"MOJE DOSTAWY - Widok: {menu_selection}")
 
-# 1. Dane
+# Dane z kolumną techniczną Kolor
 df_data = pd.DataFrame([
-    {"Lp.": 1, "Dostawca": "ASG", "Nr dostawy": "14/23", "Status": "BR", "Zakupy": "Brak danych", "Kolor": "#f8d7da"},
-    {"Lp.": 2, "Dostawca": "BARREL OPTICS", "Nr dostawy": "1/24-sampl", "Status": "Zamówiono", "Zakupy": "Brak danych", "Kolor": "#ffffff"},
-    {"Lp.": 3, "Dostawca": "WYDAWNICTWO X", "Nr dostawy": "7/24", "Status": "SKŁAD", "Zakupy": "W przygotowaniu", "Kolor": "#d4edda"},
-    {"Lp.": 4, "Dostawca": "Darek", "Nr dostawy": "1/24", "Status": "Zrealizowane", "Zakupy": "Brak danych", "Kolor": "#ffffff"},
-    {"Lp.": 5, "Dostawca": "ZIRI", "Nr dostawy": "4/24", "Status": "SKŁAD", "Zakupy": "Gotowy", "Kolor": "#d4edda"},
+    {"Lp.": 1, "Dostawca": "ASG",            "Nr dostawy": "14/23",      "Status": "BR",           "Zakupy": "Brak danych",    "Kolor": "#f8d7da"},
+    {"Lp.": 2, "Dostawca": "BARREL OPTICS",  "Nr dostawy": "1/24-sampl", "Status": "Zamówiono",    "Zakupy": "Brak danych",    "Kolor": "#ffffff"},
+    {"Lp.": 3, "Dostawca": "WYDAWNICTWO X",  "Nr dostawy": "7/24",       "Status": "SKŁAD",        "Zakupy": "W przygotowaniu","Kolor": "#d4edda"},
+    {"Lp.": 4, "Dostawca": "Darek",          "Nr dostawy": "1/24",       "Status": "Zrealizowane", "Zakupy": "Brak danych",    "Kolor": "#ffffff"},
+    {"Lp.": 5, "Dostawca": "ZIRI",           "Nr dostawy": "4/24",       "Status": "SKŁAD",        "Zakupy": "Gotowy",         "Kolor": "#d4edda"},
 ])
 
-# 2. BEZPIECZNIEJSZA funkcja stylizująca
+# Zapisz kolory PRZED usunięciem kolumny technicznej
+color_map = df_data["Kolor"].tolist()
+
+# Usuń kolumnę techniczną z danych do wyświetlenia
+df_display = df_data.drop(columns=["Kolor"])
+
+# Funkcja stylizująca - pobiera kolor z zewnętrznej listy przez indeks wiersza
 def style_row(row):
-    # Używamy .get('Kolor', '') aby uniknąć błędu, jeśli kolumna zostanie gdzieś usunięta
-    color = row.get('Kolor', '#ffffff') 
-    # Generujemy listę stylów dla wszystkich kolumn w wierszu
-    return ['background-color: ' + color] * len(row)
+    color = color_map[row.name]
+    return [f'background-color: {color}'] * len(row)
 
-# 3. Stylizowanie i Ukrywanie kolumny
-styled_df = df_data.style.apply(style_row, axis=1)
+# Nałóż style na czysty dataframe (bez kolumny Kolor)
+styled_df = df_display.style.apply(style_row, axis=1)
 
-# 4. Wyświetlanie tabeli
+# Wyświetl tabelę
 st.dataframe(
     styled_df,
     use_container_width=True,
-    hide_index=True,
-    column_config={
-        "Kolor": None  # Ta linijka jest kluczowa - ukrywa kolumnę, ale nie usuwa jej z danych
-    }
+    hide_index=True
 )
 
-st.info(f"Podsumowanie: Znaleziono towary dla sekcji {menu_selection}")
+st.info(f"Podsumowanie: Znaleziono towary dla sekcji '{menu_selection}'")
