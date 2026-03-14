@@ -15,11 +15,21 @@ st.markdown("""
 
 # --- PASEK BOCZNY (Sidebar) ---
 with st.sidebar:
-    st.title("Maszynoplik")
-    st.selectbox("Filtry produktów", ["Wszystkie", "Aktywne", "Archiwum"])
-    st.selectbox("Operacje", ["Dodaj produkt", "Zestawy"])
-    st.selectbox("CenoPlik", ["Ceny produktów", "Rodzaje cen"])
-    st.selectbox("Import", ["Excel", "Kolejka", "Historia"])
+    st.title("Panel Sterowania")
+    
+    # Główne drzewko "Zamówienia"
+    with st.expander("📦 ZAMÓWIENIA", expanded=True):
+        # Podkategorie jako rozwijane listy (tree-style)
+        st.selectbox("🔔 Powiadomienia", ["Wszystkie", "Aktywne", "Archiwum"], key="sb_pow")
+        st.selectbox("🎫 Ticket", ["Dodaj produkt", "Zestawy"], key="sb_tick")
+        st.selectbox("📅 Awizacja", ["Ceny produktów", "Rodzaje cen"], key="sb_awiz")
+    
+    # Kolejna główna sekcja
+    with st.expander("📥 IMPORT DANYCH", expanded=False):
+        st.selectbox("Typ importu", ["Excel", "Kolejka", "Historia"], key="sb_imp")
+
+    st.markdown("---")
+    st.info("Zalogowany jako: Administrator")
 
 # --- GÓRNE TAGI (Zakładki/Kategorie) ---
 st.markdown("""
