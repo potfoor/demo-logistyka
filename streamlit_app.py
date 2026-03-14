@@ -20,17 +20,11 @@ with st.sidebar:
     # Główne drzewko "Zamówienia"
     with st.expander("📦 ZAMÓWIENIA", expanded=True):
         # Podkategorie jako rozwijane listy (tree-style)
-        st.selectbox("🔔 Powiadomienia", ["Wszystkie", "Aktywne", "Archiwum"], key="sb_pow")
-        st.selectbox("🎫 Ticket", ["Dodaj produkt", "Zestawy"], key="sb_tick")
-        st.selectbox("📅 Awizacja", ["Ceny produktów", "Rodzaje cen"], key="sb_awiz")
+        st.expander("🔔 Powiadomienia", ["Wszystkie", "Aktywne", "Archiwum"], key="sb_pow")
+        st.expander("🎫 Ticket", ["Dodaj produkt", "Zestawy"], key="sb_tick")
+        st.expander("📅 Awizacja", ["Ceny produktów", "Rodzaje cen"], key="sb_awiz")
     
-    # Kolejna główna sekcja
-    with st.expander("📥 IMPORT DANYCH", expanded=False):
-        st.selectbox("Typ importu", ["Excel", "Kolejka", "Historia"], key="sb_imp")
-
-    st.markdown("---")
-    st.info("Zalogowany jako: Administrator")
-
+    
 # --- GÓRNE TAGI (Zakładki/Kategorie) ---
 st.markdown("""
     <div class="tag-container">
