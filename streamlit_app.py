@@ -98,6 +98,24 @@ df_data = pd.DataFrame([
     {"Lp.": 5, "Dostawca": "ZIRI", "Nr dostawy": "4/24", "Status": "SKŁAD", "Zakupy": "Gotowy", "Kolor": "#d4edda"},
 ])
 
+# 2. Poprawiona funkcja stylizująca (bezpieczniejszy dostęp przez klucz słownika)
+def style_row(row):
+    color = row['Kolor']
+    return [f'background-color: {color}' for _ in row]
+
+# 3. Nakładamy styl na PEŁNY dataframe (z kolumną Kolor)
+styled_df = df_data.style.apply(style_row, axis=1)
+
+# 4. Wyświetlamy stylizowany obiekt, ukrywając kolumnę 'Kolor' w konfiguracji widoku
+st.dataframe(
+    styled_df,
+    use_container_width=True,
+    hide_index=True,
+    column_config={
+        "Kolor": None  # To sprawia, że kolumna jest używana pod spodem, ale niewidoczna w GUI
+    }
+)
+
 # Funkcja do stylizacji wierszy
 def style_row(row):
     return [f'background-color: {row.Kolor}' for _ in row]
