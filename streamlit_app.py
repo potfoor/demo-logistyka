@@ -2,86 +2,92 @@ import streamlit as st
 import pandas as pd
 
 # Konfiguracja strony
-st.set_page_config(layout="wide", page_title="System Zarządzania Dostawami")
+st.set_page_config(layout="wide", page_title="Panel Logistyczny")
 
-# --- STYLE CSS (dla kolorowych przycisków i estetyki) ---
+# --- CUSTOM CSS (Stylizacja wizualna) ---
 st.markdown("""
     <style>
-    .stButton>button { width: 100%; border-radius: 5px; }
-    .tag-container { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 20px; }
-    .tag { padding: 4px 10px; border-radius: 4px; font-size: 12px; color: white; font-weight: bold; }
+    /* Główny tło i fonty */
+    .stApp { background-color: #f8f9fa; }
+    
+    /* Stylizacja górnych tagów */
+    .tag-container { display: flex; flex-wrap: wrap; gap: 4px; padding-bottom: 15px; }
+    .tag { padding: 2px 8px; border-radius: 3px; font-size: 11px; color: white; font-weight: 600; text-transform: uppercase; }
+    
+    /* Stylizacja nagłówków sekcji */
+    .section-header { 
+        background-color: #f1f1f1; 
+        padding: 5px 10px; 
+        border-radius: 5px 5px 0 0; 
+        border-bottom: 2px solid #ddd;
+        font-weight: bold; font-size: 14px;
+        margin-top: 10px;
+    }
+    
+    /* Kolory statusów w tabeli (symulacja) */
+    .status-br { background-color: #d4edda; color: #155724; padding: 3px; border-radius: 3px; }
+    .status-missing { background-color: #f8d7da; color: #721c24; padding: 3px; border-radius: 3px; }
+    
+    /* Pasek boczny - ikony i tekst */
+    .css-1d391kg { background-color: #ffffff; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- PASEK BOCZNY (Sidebar) ---
+# --- SIDEBAR (Menu boczne z ikonami) ---
 with st.sidebar:
-    st.title("Maszynoplik")
-    st.selectbox("Filtry produktów", ["Wszystkie", "Aktywne", "Archiwum"])
-    st.selectbox("Operacje", ["Dodaj produkt", "Zestawy"])
-    st.selectbox("CenoPlik", ["Ceny produktów", "Rodzaje cen"])
-    st.selectbox("Import", ["Excel", "Kolejka", "Historia"])
+    st.markdown("### 🖥️ Maszynoplik")
+    st.markdown("---")
+    st.write("🔍 **Filtry produktów**")
+    st.write("⚙️ **Operacje**")
+    st.write("➕ **Dodawanie towarów**")
+    st.write("📦 **Zestawy produktów**")
+    st.markdown("---")
+    st.write("💰 **CenoPlik**")
+    st.write("📊 **Ceny produktów**")
+    st.write("📑 **Rodzaje cen**")
+    st.markdown("---")
+    st.write("📥 **Import**")
+    st.write("📋 **Kolejka importów**")
 
-# --- GÓRNE TAGI (Zakładki/Kategorie) ---
-st.markdown("""
-    <div class="tag-container">
-        <span class="tag" style="background-color: #555;">#01 MEDIA</span>
-        <span class="tag" style="background-color: #8db600;">#4F AW'23</span>
-        <span class="tag" style="background-color: #8db600;">#4F AW'24</span>
-        <span class="tag" style="background-color: #2e7d32;">#4F GR.F</span>
-        <span class="tag" style="background-color: #ff5722;">#4SHOOTER</span>
-        <span class="tag" style="background-color: #0288d1;">#A ZESTAWY</span>
-    </div>
-""", unsafe_allow_html=True)
+# --- GÓRNE MENU (Kolorowe Tagi) ---
+tags_html = """
+<div class="tag-container">
+    <span class="tag" style="background-color: #333;">#01 MEDIA</span>
+    <span class="tag" style="background-color: #93c47d;">#4F AW'23</span>
+    <span class="tag" style="background-color: #6aa84f;">#4F AW'24</span>
+    <span class="tag" style="background-color: #38761d;">#4F GR.F</span>
+    <span class="tag" style="background-color: #e06666;">#4SHOOTER</span>
+    <span class="tag" style="background-color: #3d85c6;">#A ZESTAWY</span>
+    <span class="tag" style="background-color: #45818e;">#ABISAL</span>
+</div>
+"""
+st.markdown(tags_html, unsafe_allow_html=True)
 
-# --- SEKCE FILTRÓW (Expander) ---
-col_f1, col_f2 = st.columns([1, 2])
+# --- SEKCE FILTRÓW (Układ kolumnowy) ---
+c1, c2 = st.columns([1, 2.5])
 
-with col_f1:
-    with st.expander("🔍 Filtry - Unikalne", expanded=True):
-        st.text_input("SKU:")
-        st.text_input("Kod:")
+with c1:
+    st.markdown('<div class="section-header">Filtry - Unikalne</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.text_input("SKU:", placeholder="Wpisz SKU...")
         st.checkbox("Pokaż warianty", value=True)
-        c1, c2, c3 = st.columns(3)
-        c1.button("Filtruj", type="primary")
-        c2.button("Zakładkę")
-        c3.button("Resetuj")
+        btn_cols = st.columns(3)
+        btn_cols[0].button("🔵 FILTRUJ")
+        btn_cols[1].button("📂 ZAKŁADKĘ")
+        btn_cols[2].button("🔄")
 
-with col_f2:
-    with st.expander("📂 Filtry - Wielowybór", expanded=True):
-        f_c1, f_c2, f_c3 = st.columns(3)
-        f_c1.selectbox("Zakładka:", ["Wybierz...", "Magazyn A", "Magazyn B"])
-        f_c2.multiselect("Grupy:", ["Grupa 1", "Grupa 2"])
-        f_c3.selectbox("Typ PIM:", ["Dowolny", "Zdefiniowany"])
+with c2:
+    st.markdown('<div class="section-header">Filtry - Wielowybór</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        f_row1 = st.columns(3)
+        f_row1[0].selectbox("Zakładka:", ["Wszystkie", "Magazyn", "Outlet"])
+        f_row1[1].multiselect("Grupy:", ["Grupa A", "Grupa B"], default=[])
+        f_row1[2].selectbox("Typ PIM:", ["Dowolny", "Zdefiniowany"])
         
-        f_c4, f_c5, f_c6 = st.columns(3)
-        f_c4.text_input("Nazwa:")
-        f_c5.date_input("Odcięcie od:")
-        f_c6.date_input("do:")
-        st.button("FILTRUJ ZAAWANSOWANE")
+        f_row2 = st.columns(3)
+        f_row2[0].text_input("Kod obcy:")
+        f_row2[1].text_input("Marka:")
+        f_row2[2].date_input("Odcięcie:")
+        st.button("⚙️ ZAAWANSOWANE")
 
-# --- WYBÓR KOLUMN ---
-with st.expander("📊 Wybierz kolumny tabeli"):
-    st.multiselect("Kolumny towaru:", ["Kod", "EAN", "Waga", "Katalog"], default=["Kod", "EAN"])
-    st.multiselect("Porównywarki:", ["Ceneo", "Google", "Empik"])
-
-# --- TABELA DANYCH (Moje Dostawy) ---
-st.subheader("MOJE DOSTAWY")
-
-# Przykładowe dane odzwierciedlające zdjęcie
-data = {
-    "Lp.": [1, 2, 3, 4, 5],
-    "Dostawca": ["ABC", "BARREL OPTICS", "WYDAWNICTWO X", "Darek", "ASG"],
-    "Nr dostawy": ["14/23", "1/24-sampl", "7/24", "1/24", "13/20"],
-    "Data": ["17-03-2024", "12-01-2024", "12-01-2024", "-", "05-03-2024"],
-    "Priorytet": ["Normalny", "Normalny", "Normalny", "Normalny", "Normalny"],
-    "Status": ["BR", "Zamówiono", "SKŁAD", "Zrealizowano", "BR"],
-    "Zakupy": ["Brak danych", "Brak danych", "W przygotowaniu", "Brak danych", "Gotowy"]
-}
-
-df = pd.DataFrame(data)
-
-# Wyświetlenie tabeli z interaktywnymi funkcjami
-st.dataframe(df, use_container_width=True, hide_index=True)
-
-# Pasek statusu na dole
-st.info("Znaleziono towary: > 1000")
+# --- TABELA "MOJE DOSTAWY" ---
