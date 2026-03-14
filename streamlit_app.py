@@ -86,10 +86,10 @@ with col_right:
         f_row2[2].date_input("Data odcięcia:")
         st.button("USTAWIENIA ZAAWANSOWANE", use_container_width=True)
 
-# 6. TABELA DANYCH "MOJE DOSTAWY"
+# --- 6. TABELA DANYCH "MOJE DOSTAWY" ---
 st.subheader(f"MOJE DOSTAWY - Widok: {menu_selection}")
 
-# Twoje dane
+# Twoje dane (upewnij się, że są zdefiniowane tylko raz)
 df_data = pd.DataFrame([
     {"Lp.": 1, "Dostawca": "ASG", "Nr dostawy": "14/23", "Status": "BR", "Zakupy": "Brak danych", "Kolor": "#f8d7da"},
     {"Lp.": 2, "Dostawca": "BARREL OPTICS", "Nr dostawy": "1/24-sampl", "Status": "Zamówiono", "Zakupy": "Brak danych", "Kolor": "#ffffff"},
@@ -98,20 +98,22 @@ df_data = pd.DataFrame([
     {"Lp.": 5, "Dostawca": "ZIRI", "Nr dostawy": "4/24", "Status": "SKŁAD", "Zakupy": "Gotowy", "Kolor": "#d4edda"},
 ])
 
-# Poprawna funkcja stylizująca
+# Funkcja stylizująca - korzystamy z bezpiecznego zapisu row['Kolor']
 def style_row(row):
     color = row['Kolor']
     return [f'background-color: {color}' for _ in row]
 
-# Nakładamy styl i wyświetlamy (BEZ zdublowanego kodu poniżej)
+# KLUCZ: Najpierw nakładamy style na PEŁNY dataframe
 styled_df = df_data.style.apply(style_row, axis=1)
 
+# KLUCZ 2: Wyświetlamy, ukrywając kolumnę 'Kolor' w konfiguracji (column_config)
+# ZAMIAST używać .drop()
 st.dataframe(
     styled_df,
     use_container_width=True,
     hide_index=True,
     column_config={
-        "Kolor": None  # Ukrywa kolumnę pomocniczą
+        "Kolor": None  # To sprawia, że kolumna istnieje dla kodu, ale zarząd jej nie widzi
     }
 )
 
