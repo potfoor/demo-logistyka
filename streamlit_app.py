@@ -14,13 +14,11 @@ if 'current_year' not in st.session_state: st.session_state.current_year = 26
 osoby_kolory = {"Jan Kowalski": "#333333", "Anna Nowak": "#8db600", "Piotr Zieliński": "#ff5722"}
 ZALOGOWANY_UZYTKOWNIK = "Jan Kowalski"
 lista_firm = ["Samsung", "Toyota", "Coca-Cola", "Microsoft", "Nestlé", "Apple", "LG", "Sony", "Dell", "IKEA"]
-
-# Definicja wszystkich kolumn
 WSZYSTKIE_KOLUMNY = ["Lp.", "Dostawca", "Nr dostawy", "HWO", "Status", "Zakupy", "Cen", "Waga", "Pal", "Box", "Opiekun", "Aktualizacja"]
 
 raw_data = []
 for i, firma in enumerate(lista_firm * 3):
-    opiekun = list(osoby_kolory.keys())[i % 3] # Rozdzielenie na różnych opiekunów
+    opiekun = list(osoby_kolory.keys())[i % 3]
     alert = "TAK" if i in [1, 4, 10] else "Nie"
     raw_data.append({
         "Lp.": i + 1, "Dostawca": firma, "Nr dostawy": f"{100+i}/26 🔗",
@@ -31,15 +29,21 @@ for i, firma in enumerate(lista_firm * 3):
 df = pd.DataFrame(raw_data)
 alerty_jana = df[(df["Opiekun"] == ZALOGOWANY_UZYTKOWNIK) & (df["Cen"] == "TAK")]
 
-# --- 4. CSS ---
+# --- 4. CSS (Zagęszczenie przycisków i Karta) ---
 st.markdown("""
     <style>
     .tag-container { display: flex; flex-wrap: wrap; gap: 4px; padding-bottom: 20px; }
     .tag { padding: 3px 8px; border-radius: 3px; font-size: 10px; color: white; font-weight: bold; text-transform: uppercase; }
     .stButton > button { width: 100%; height: 38px; border-radius: 4px; }
     div[data-testid="column"] button[kind="primary"] { background-color: #ff4b4b !important; color: white !important; }
+    
+    /* Popover i Karta */
     div[data-testid="stPopover"] > button { margin-top: 28px; height: 38px; width: 100%; border: 1px solid #d1d5db; background-color: #f8f9fa; }
     [data-testid="stPopoverContent"] { width: 500px !important; } 
+    
+    /* Zagęszczenie kolumn dla przycisków */
+    [data-testid="stHorizontalBlock"] { gap: 10px !important; }
+    
     .alert-box { padding: 15px; background-color: #fff5f5; border-left: 5px solid #ff4b4b; border-radius: 5px; margin-bottom: 10px; }
     [data-testid="stDataFrame"] { font-size: 11px; }
     </style>
@@ -100,20 +104,18 @@ if menu == 'Powiadomienia':
     for _, r in alerty_jana.iterrows():
         st.markdown(f'<div class="alert-box"><b>⚠️ ALERT CENOWY: {r["Dostawca"]}</b><br>Weryfikacja ceny dla {r["Nr dostawy"]}.</div>', unsafe_allow_html=True)
 else:
-    # FILTROWANIE DANYCH WEJŚCIOWYCH
     df_v = df.copy()
     if menu in ['Moje Dostawy', 'Moje Awizacje']: 
         df_v = df[df["Opiekun"] == ZALOGOWANY_UZYTKOWNIK]
 
-    # TAGI (Tylko informacyjnie)
     st.write("**Aktywni Dostawcy:**")
     t_html = '<div class="tag-container">'
     for d_name in df_v["Dostawca"].unique():
         t_html += f'<span class="tag" style="background-color: {osoby_kolory.get(ZALOGOWANY_UZYTKOWNIK, "#333")};">{d_name}</span>'
     st.markdown(t_html + '</div>', unsafe_allow_html=True)
 
-    # WYSZUKIWANIE
     st.header("🔍 Wyszukiwanie")
+    # GŁÓWNY KONTENER FILTRÓW
     with st.container(border=True):
         c1, c2, c3 = st.columns([3, 1, 3])
         with c1: 
@@ -128,34 +130,33 @@ else:
                     if st.button("💾 Zapisz"): st.success("Zapisano")
                 else: st.warning("Wybierz dostawcę")
         with c3:
-    st.write("**Akcje Szybkie:**")
-    
-    # Tworzymy kolumny o szerokości zależnej od zawartości (small gaps)
-    # Używamy dużej liczby kolumn lub stałych szerokości, aby przyciski były blisko
-    sa1, sa2, sa3, sa4, _ = st.columns([1, 1, 1, 1.2, 4]) 
-    
-    with sa1:
-        if st.button("✨ Nowa dostawa", type="primary", use_container_width=True): 
-            modal_kreatora()
-    with sa2: 
-        st.button("➕ Dodaj Dostawcę", use_container_width=True)
-    with sa3: 
-        st.button("🚛 Dodaj Przewoźnika", use_container_width=True)
-    with sa4: 
-        st.button("🔄 Zamówienia Cykliczne", use_container_width=True)
-        # ZARZĄDZANIE TABELĄ
-        st.write("---")
-        st.subheader("📊 Zarządzanie Tabelą")
-        with st.container(border=True):
-            cm1, cm2 = st.columns([3, 1])
-            with cm1:
-            # DOMYŚLNIE WSZYSTKIE KOLUMNY DLA "WSZYSTKIE DOSTAWY"
+            default_ops = [] if menu == 'Wszystkie Dostawy' else [ZALOGOWANY_UZYTKOWNIK]
+            o_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()), default=default_ops)
+
+        st.columns(4)[0].text_input("Ticket:", placeholder="Nr...")
+        
+        st.divider()
+        st.write("**Akcje Szybkie:**")
+        # PRZYCISKI BLISKO SIEBIE (Małe wagi kolumn + brak pustych separatorów)
+        sa1, sa2, sa3, sa4, sa_spacer = st.columns([1.2, 1.2, 1.2, 1.4, 4])
+        with sa1:
+            if st.button("✨ Nowa dostawa", type="primary", use_container_width=True): modal_kreatora()
+        with sa2: st.button("➕ Dodaj Dostawcę", use_container_width=True)
+        with sa3: st.button("🚛 Dodaj Przewoźnika", use_container_width=True)
+        with sa4: st.button("🔄 Zamówienia Cykliczne", use_container_width=True)
+
+    # ZARZĄDZANIE TABELĄ (Poza kontenerem wyszukiwania dla przejrzystości)
+    st.write("---")
+    st.subheader("📊 Zarządzanie Tabelą")
+    with st.container(border=True):
+        cm1, cm2 = st.columns([3, 1])
+        with cm1:
             def_cols = WSZYSTKIE_KOLUMNY if menu == 'Wszystkie Dostawy' else ["Lp.", "Dostawca", "Nr dostawy", "Status", "Cen", "Opiekun"]
             selected_cols = st.multiselect("Pokaż kolumny:", WSZYSTKIE_KOLUMNY, default=def_cols)
         with cm2: 
             st.selectbox("Widok:", ["Standardowy", "Pełny"])
 
-    # FINALNE FILTROWANIE TABELI
+    # FINALNE FILTROWANIE I WYŚWIETLANIE
     f_df = df_v.copy()
     if d_sel != "Wszyscy": f_df = f_df[f_df["Dostawca"] == d_sel]
     if o_sel: f_df = f_df[f_df["Opiekun"].isin(o_sel)]
