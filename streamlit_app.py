@@ -126,6 +126,9 @@ with st.sidebar:
             sac.TreeItem('Ticket', icon='ticket-perforated', children=[
                 sac.TreeItem('Moje Dostawy', icon='person-check'),
                 sac.TreeItem('Wszystkie Dostawy', icon='globe'),
+            sac.TreeItem('Awizacja', icon='ticket-perforated', children=[
+                sac.TreeItem('Moje Dostawy', icon='person-check'),
+                sac.TreeItem('Kalendarz', icon='globe'),
             ]),
         ]),
     ], label='NAWIGACJA', open_all=True, size='sm')
