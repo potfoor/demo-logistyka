@@ -125,7 +125,7 @@ with st.sidebar:
             sac.TreeItem('Powiadomienia', icon='bell', tag=sac.Tag(str(len(alerty_jana)), color='red')),
             sac.TreeItem('Ticket', icon='ticket-perforated', children=[
                 sac.TreeItem('Moje Dostawy', icon='person-check'),
-                sac.TreeItem('Wszystkie Dostawy', icon='globe'),
+                sac.TreeItem('Wszystkie Dostawy', icon='globe')),
             sac.TreeItem('Awizacja', icon='ticket-perforated', children=[
                 sac.TreeItem('Moje Dostawy', icon='person-check'),
                 sac.TreeItem('Kalendarz', icon='globe'),
