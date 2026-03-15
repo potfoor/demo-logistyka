@@ -51,7 +51,7 @@ st.markdown("""
 def modal_kreatora():
     sac.steps(items=[
         sac.StepsItem(title='Rodzaj'), sac.StepsItem(title='Dostawca'),
-        sac.StepsItem(title='Metoda'), sac.StepsItem(title='Info'), sac.StepsItem(title='Finalizacja')
+        sac.StepsItem(title='Formatka'), sac.StepsItem(title='Status'), sac.StepsItem(title='Finalizacja')
     ], index=st.session_state.step, color='#ff4b4b')
     
     st.divider()
