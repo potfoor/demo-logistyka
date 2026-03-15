@@ -46,47 +46,73 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 5. MODAL KREATORA ---
+# --- 5. MODAL KREATORA (NAPRAWIONY) ---
 @st.dialog("PROCES TWORZENIA NOWEGO ZAMÓWIENIA", width="large")
 def modal_kreatora():
+    # Używamy sac.steps, a nie st.steps
     sac.steps(items=[
         sac.StepsItem(title='Rodzaj'), sac.StepsItem(title='Dostawca'),
-        sac.StepsItem(title='Formatka'), sac.StepsItem(title='Status'), sac.StepsItem(title='Finalizacja')
+        sac.StepsItem(title='Metoda'), sac.StepsItem(title='Info'), sac.StepsItem(title='Finalizacja')
     ], index=st.session_state.step, color='#ff4b4b')
     
     st.divider()
+    
     if st.session_state.step == 0:
         r = st.radio("Rodzaj:", ["Magazyn", "Pre-order"], horizontal=True)
-        if r == "Magazyn": st.selectbox("Cel:", ["Zapas", "Bieżące"])
+        if r == "Magazyn": 
+            st.selectbox("Cel:", ["Zapas", "Bieżące"])
+            
     elif st.session_state.step == 1:
         st.selectbox("Dostawca:", lista_firm)
+        # Numer zamówienia z możliwością edycji
         st.text_input("Numer zamówienia:", f"1/{st.session_state.current_year}")
+        
     elif st.session_state.step == 2:
-        st.segmented(items=['Ręczna', 'Formatka', 'Automatyczna'], color='#ff4b4b')
-        st.text_area("Wklej treść zamówienia:")
+        # TUTAJ BYŁ BŁĄD: Musi być sac.segmented zamiast st.segmented
+        sac.segmented(
+            items=[
+                sac.SegmentedItem(label='Ręczna'),
+                sac.SegmentedItem(label='Formatka'),
+                sac.SegmentedItem(label='Automatyczna'),
+            ], color='#ff4b4b', align='center'
+        )
+        st.text_area("Wklej treść zamówienia lub listę pozycji:")
+        
     elif st.session_state.step == 3:
-        st.selectbox("Status:", ["Oczekuje", "W trakcie kompletowania"])
-        st.text_area("Uwagi ogólne:")
+        col_s1, col_s2 = st.columns(2)
+        col_s1.selectbox("Status:", ["Oczekuje", "W trakcie kompletowania"])
+        col_s2.text_input("Osoba odpowiedzialna:", value=ZALOGOWANY_UZYTKOWNIK)
+        st.text_area("Uwagi ogólne do ticketu:")
+        
     elif st.session_state.step == 4:
-        st.success("Wszystkie kroki zakończone!")
-        st.write("Status po zapisie: **W drodze**")
+        st.success("Wszystkie dane zostały uzupełnione!")
+        st.markdown("### Podsumowanie:")
+        st.write("- Status: **W drodze**")
+        st.write("- Powiadomienie: **Wysłane do dostawcy**")
+        st.checkbox("Potwierdzam poprawność danych", value=True)
 
     st.divider()
-    c_nav1, c_nav2 = st.columns(2)
+    
+    # Nawigacja - przyciski na dole pop-upa
+    c_nav1, c_nav2 = st.columns([1, 1])
     with c_nav1:
         if st.session_state.step > 0:
-            if st.button("⬅️ Wróć"): 
+            # Używamy st.button z unikalnym key, żeby uniknąć konfliktów
+            if st.button("⬅️ Wróć", key="btn_prev"): 
                 st.session_state.step -= 1
-                st.rerun()
+                st.rerun() # Odświeża modal, by pokazać poprzedni krok
+                
     with c_nav2:
         if st.session_state.step < 4:
-            if st.button("Dalej ➡️", type="primary"):
+            if st.button("Dalej ➡️", type="primary", key="btn_next"):
                 st.session_state.step += 1
-                st.rerun()
+                st.rerun() # Odświeża modal, by pokazać kolejny krok
         else:
-            if st.button("✅ Zakończ i Dodaj", type="primary"):
+            if st.button("✅ Zakończ i Dodaj", type="primary", key="btn_finish"):
+                # Resetujemy proces dla następnego razu
                 st.session_state.step = 0
-                st.rerun()
+                st.toast("Zamówienie zostało pomyślnie utworzone!")
+                # Tutaj nie robimy rerun, aby zamknąć dialog po zakończeniu
 
 # --- 6. PANEL BOCZNY ---
 with st.sidebar:
