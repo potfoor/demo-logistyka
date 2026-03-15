@@ -128,26 +128,27 @@ else:
                     if st.button("💾 Zapisz"): st.success("Zapisano")
                 else: st.warning("Wybierz dostawcę")
         with c3:
-            # DOMYŚLNIE WSZYSCY DLA "WSZYSTKIE DOSTAWY", TYLKO JA DLA "MOJE"
-            default_ops = [] if menu == 'Wszystkie Dostawy' else [ZALOGOWANY_UZYTKOWNIK]
-            o_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()), default=default_ops)
-
-        st.columns(4)[0].text_input("Ticket:", placeholder="Nr...")
-        st.divider()
-        st.write("**Akcje Szybkie:**")
-        sa1, sp1, sa2, sp2, sa3, sp3, sa4 = st.columns([1, 0.2, 1, 0.2, 1, 0.2, 1])
-        with sa1: 
-            if st.button("✨ Nowa dostawa", type="primary"): modal_kreatora()
-        with sa2: st.button("➕ Dodaj Dostawcę"); 
-        with sa3: st.button("🚛 Dodaj Przewoźnika"); 
-        with sa4: st.button("🔄 Zamówienia Cykliczne")
-
-    # ZARZĄDZANIE TABELĄ
-    st.write("---")
-    st.subheader("📊 Zarządzanie Tabelą")
-    with st.container(border=True):
-        cm1, cm2 = st.columns([3, 1])
-        with cm1:
+    st.write("**Akcje Szybkie:**")
+    
+    # Tworzymy kolumny o szerokości zależnej od zawartości (small gaps)
+    # Używamy dużej liczby kolumn lub stałych szerokości, aby przyciski były blisko
+    sa1, sa2, sa3, sa4, _ = st.columns([1, 1, 1, 1.2, 4]) 
+    
+    with sa1:
+        if st.button("✨ Nowa dostawa", type="primary", use_container_width=True): 
+            modal_kreatora()
+    with sa2: 
+        st.button("➕ Dodaj Dostawcę", use_container_width=True)
+    with sa3: 
+        st.button("🚛 Dodaj Przewoźnika", use_container_width=True)
+    with sa4: 
+        st.button("🔄 Zamówienia Cykliczne", use_container_width=True)
+        # ZARZĄDZANIE TABELĄ
+        st.write("---")
+        st.subheader("📊 Zarządzanie Tabelą")
+        with st.container(border=True):
+            cm1, cm2 = st.columns([3, 1])
+            with cm1:
             # DOMYŚLNIE WSZYSTKIE KOLUMNY DLA "WSZYSTKIE DOSTAWY"
             def_cols = WSZYSTKIE_KOLUMNY if menu == 'Wszystkie Dostawy' else ["Lp.", "Dostawca", "Nr dostawy", "Status", "Cen", "Opiekun"]
             selected_cols = st.multiselect("Pokaż kolumny:", WSZYSTKIE_KOLUMNY, default=def_cols)
