@@ -16,10 +16,12 @@ ZALOGOWANY_UZYTKOWNIK = "Jan Kowalski"
 lista_firm = ["Samsung", "Toyota", "Coca-Cola", "Microsoft", "Nestlé", "Apple", "LG", "Sony", "Dell", "IKEA"]
 WSZYSTKIE_KOLUMNY = ["Lp.", "Dostawca", "Nr dostawy", "HWO", "Status", "Zakupy", "Cen", "Waga", "Pal", "Box", "Opiekun", "Aktualizacja"]
 
+# Generowanie bazy danych z alertami
 raw_data = []
 for i, firma in enumerate(lista_firm * 3):
     opiekun = list(osoby_kolory.keys())[i % 3]
-    alert = "TAK" if i in [1, 4, 10] else "Nie"
+    # Alert cenowy dla co 4 zamówienia Jana Kowalskiego
+    alert = "TAK" if (opiekun == ZALOGOWANY_UZYTKOWNIK and i % 4 == 0) else "Nie"
     raw_data.append({
         "Lp.": i + 1, "Dostawca": firma, "Nr dostawy": f"{100+i}/26 🔗",
         "HWO": "12-03-2026", "Status": "Zamówione", "Cen": alert, 
@@ -27,9 +29,10 @@ for i, firma in enumerate(lista_firm * 3):
         "Aktualizacja": "2026-03-14 22:45", "Zakupy": "OK"
     })
 df = pd.DataFrame(raw_data)
-alerty_jana = df[(df["Opiekun"] == ZALOGOWANY_UZYTKOWNIK) & (df["Cen"] == "TAK")]
+# Filtrowanie alertów konkretnie pod menu Powiadomienia
+alerty_uzytkownika = df[(df["Opiekun"] == ZALOGOWANY_UZYTKOWNIK) & (df["Cen"] == "TAK")]
 
-# --- 4. CSS (Zagęszczenie przycisków i Karta) ---
+# --- 4. CSS (Pełna Karta i Zagęszczenie) ---
 st.markdown("""
     <style>
     .tag-container { display: flex; flex-wrap: wrap; gap: 4px; padding-bottom: 20px; }
@@ -37,14 +40,12 @@ st.markdown("""
     .stButton > button { width: 100%; height: 38px; border-radius: 4px; }
     div[data-testid="column"] button[kind="primary"] { background-color: #ff4b4b !important; color: white !important; }
     
-    /* Popover i Karta */
+    /* POWIĘKSZONA KARTA W POPOVERZE */
     div[data-testid="stPopover"] > button { margin-top: 28px; height: 38px; width: 100%; border: 1px solid #d1d5db; background-color: #f8f9fa; }
-    [data-testid="stPopoverContent"] { width: 500px !important; } 
+    [data-testid="stPopoverContent"] { width: 600px !important; } 
     
-    /* Zagęszczenie kolumn dla przycisków */
+    .alert-card { padding: 20px; background-color: #fff5f5; border-left: 6px solid #ff4b4b; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     [data-testid="stHorizontalBlock"] { gap: 10px !important; }
-    
-    .alert-box { padding: 15px; background-color: #fff5f5; border-left: 5px solid #ff4b4b; border-radius: 5px; margin-bottom: 10px; }
     [data-testid="stDataFrame"] { font-size: 11px; }
     </style>
 """, unsafe_allow_html=True)
@@ -66,7 +67,7 @@ def modal_kreatora():
     elif st.session_state.step == 3:
         c1, c2 = st.columns(2); c1.selectbox("Status:", ["Oczekuje", "W trakcie"]); c2.text_input("Odpowiedzialny:", value=ZALOGOWANY_UZYTKOWNIK); st.text_area("Uwagi:")
     elif st.session_state.step == 4:
-        st.success("Gotowe!"); st.write("Status: **W drodze**")
+        st.success("Gotowe!"); st.write("Status: **W drodze (Awizacja)**")
     st.divider()
     c_nav1, c_nav2 = st.columns(2)
     with c_nav1:
@@ -86,7 +87,7 @@ with st.sidebar:
     menu = sac.tree(items=[
         sac.TreeItem('Dashboard', icon='speedometer2'),
         sac.TreeItem('Zamówienia', icon='box', children=[
-            sac.TreeItem('Powiadomienia', icon='bell', tag=sac.Tag(str(len(alerty_jana)), color='red')),
+            sac.TreeItem('Powiadomienia', icon='bell', tag=sac.Tag(str(len(alerty_uzytkownika)), color='red')),
             sac.TreeItem('Ticket', icon='ticket-perforated', children=[
                 sac.TreeItem('Moje Dostawy', icon='person-check'),
                 sac.TreeItem('Wszystkie Dostawy', icon='globe'),
@@ -100,10 +101,21 @@ with st.sidebar:
 
 # --- 7. WIDOKI ---
 if menu == 'Powiadomienia':
-    st.header("🔔 Powiadomienia")
-    for _, r in alerty_jana.iterrows():
-        st.markdown(f'<div class="alert-box"><b>⚠️ ALERT CENOWY: {r["Dostawca"]}</b><br>Weryfikacja ceny dla {r["Nr dostawy"]}.</div>', unsafe_allow_html=True)
+    st.header(f"🔔 Alerty i Powiadomienia ({len(alerty_uzytkownika)})")
+    if len(alerty_uzytkownika) > 0:
+        for _, r in alerty_uzytkownika.iterrows():
+            st.markdown(f"""
+            <div class="alert-card">
+                <span style="color: #ff4b4b; font-weight: bold;">⚠️ KONTROLA CENY</span> | Dostawca: <b>{r['Dostawca']}</b><br>
+                Nr dostawy: {r['Nr dostawy']} | Opiekun: {r['Opiekun']}<br>
+                <small>Zaktualizowano: {r['Aktualizacja']}</small>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.info("Brak aktywnych powiadomień.")
+
 else:
+    # FILTROWANIE DANYCH
     df_v = df.copy()
     if menu in ['Moje Dostawy', 'Moje Awizacje']: 
         df_v = df[df["Opiekun"] == ZALOGOWANY_UZYTKOWNIK]
@@ -115,7 +127,6 @@ else:
     st.markdown(t_html + '</div>', unsafe_allow_html=True)
 
     st.header("🔍 Wyszukiwanie")
-    # GŁÓWNY KONTENER FILTRÓW
     with st.container(border=True):
         c1, c2, c3 = st.columns([3, 1, 3])
         with c1: 
@@ -123,12 +134,29 @@ else:
         with c2:
             with st.popover("📇 KARTA"):
                 if d_sel != "Wszyscy":
-                    st.subheader(f"Karta: {d_sel}")
-                    st.text_input("URL Serwisu:", f"https://portal-b2b.{d_sel.lower()}.com")
-                    ck1, ck2 = st.columns(2); ck1.text_input("Login:", "jan.logistyka"); ck2.text_input("Hasło:", "****", type="password")
-                    st.text_input("Osoba kontaktowa:", "Marek Nowak"); st.text_input("Email Price List:", "ceny@dostawca.pl")
-                    if st.button("💾 Zapisz"): st.success("Zapisano")
-                else: st.warning("Wybierz dostawcę")
+                    st.subheader(f"Karta Dostawcy: {d_sel}")
+                    st.divider()
+                    col_k1, col_k2 = st.columns(2)
+                    with col_k1:
+                        st.write("**🔐 Dane B2B**")
+                        st.text_input("URL Serwisu:", f"https://b2b.{d_sel.lower()}.pl")
+                        st.text_input("Login:", "jan.kowalski")
+                        st.text_input("Hasło:", "********", type="password")
+                    with col_k2:
+                        st.write("**👤 Kontakt**")
+                        st.text_input("Opiekun (Firma):", "Aneta Nowak")
+                        st.text_input("Tel:", "+48 123 456 789")
+                        st.text_input("Email Price List:", "ceny@dostawca.pl")
+                    
+                    st.divider()
+                    st.write("**📋 Warunki i Logistyka**")
+                    col_k3, col_k4 = st.columns(2)
+                    col_k3.selectbox("Dzień dostawy:", ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"])
+                    col_k4.text_input("Minimum logistyczne:", "1500 PLN")
+                    st.text_area("Notatki operacyjne:", "Zawsze dzwonić przed awizacją.")
+                    if st.button("💾 Zapisz zmiany w karcie"): st.success("Zapisano dane kontrahenta!")
+                else: 
+                    st.warning("Wybierz dostawcę z listy obok, aby zobaczyć jego kartę.")
         with c3:
             default_ops = [] if menu == 'Wszystkie Dostawy' else [ZALOGOWANY_UZYTKOWNIK]
             o_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()), default=default_ops)
@@ -137,15 +165,14 @@ else:
         
         st.divider()
         st.write("**Akcje Szybkie:**")
-        # PRZYCISKI BLISKO SIEBIE (Małe wagi kolumn + brak pustych separatorów)
-        sa1, sa2, sa3, sa4, sa_spacer = st.columns([1.2, 1.2, 1.2, 1.4, 4])
+        sa1, sa2, sa3, sa4, _ = st.columns([1.2, 1.2, 1.2, 1.4, 4])
         with sa1:
             if st.button("✨ Nowa dostawa", type="primary", use_container_width=True): modal_kreatora()
         with sa2: st.button("➕ Dodaj Dostawcę", use_container_width=True)
         with sa3: st.button("🚛 Dodaj Przewoźnika", use_container_width=True)
         with sa4: st.button("🔄 Zamówienia Cykliczne", use_container_width=True)
 
-    # ZARZĄDZANIE TABELĄ (Poza kontenerem wyszukiwania dla przejrzystości)
+    # ZARZĄDZANIE TABELĄ
     st.write("---")
     st.subheader("📊 Zarządzanie Tabelą")
     with st.container(border=True):
@@ -156,7 +183,7 @@ else:
         with cm2: 
             st.selectbox("Widok:", ["Standardowy", "Pełny"])
 
-    # FINALNE FILTROWANIE I WYŚWIETLANIE
+    # WYŚWIETLANIE TABELI
     f_df = df_v.copy()
     if d_sel != "Wszyscy": f_df = f_df[f_df["Dostawca"] == d_sel]
     if o_sel: f_df = f_df[f_df["Opiekun"].isin(o_sel)]
