@@ -165,12 +165,13 @@ else:
         
         st.divider()
         st.write("**Akcje Szybkie:**")
-        sa1, sa2, sa3, sa4, _ = st.columns([1.2, 1.2, 1.2, 1.4, 4])
+        sa1, sa2, sa3, sa4, sa5 _ = st.columns([1.2, 1.2, 1.2, 1.2, 1.4, 4])
         with sa1:
             if st.button("✨ Nowa dostawa", type="primary", use_container_width=True): modal_kreatora()
         with sa2: st.button("➕ Dodaj Dostawcę", use_container_width=True)
         with sa3: st.button("🚛 Dodaj Przewoźnika", use_container_width=True)
         with sa4: st.button("🔄 Zamówienia Cykliczne", use_container_width=True)
+        with sa5: st.button("🔄 Szablor Urlop", use_container_width=True)    
 
     # ZARZĄDZANIE TABELĄ
     st.write("---")
