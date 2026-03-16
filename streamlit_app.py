@@ -165,7 +165,7 @@ else:
         
         st.divider()
         st.write("**Akcje Szybkie:**")
-        sa1, sa2, sa3, sa4, sa5 _ = st.columns([1.2, 1.2, 1.2, 1.2, 1.4, 4])
+        sa1, sa2, sa3, sa4, sa5, _ = st.columns([1.2, 1.2, 1.2, 1.2, 1.4, 4])
         with sa1:
             if st.button("✨ Nowa dostawa", type="primary", use_container_width=True): modal_kreatora()
         with sa2: st.button("➕ Dodaj Dostawcę", use_container_width=True)
