@@ -171,7 +171,7 @@ else:
         with sa2: st.button("➕ Dodaj Dostawcę", use_container_width=True)
         with sa3: st.button("🚛 Dodaj Przewoźnika", use_container_width=True)
         with sa4: st.button("🔄 Zamówienia Cykliczne", use_container_width=True)
-        with sa5: st.button("🔄 Szablor Urlop", use_container_width=True)    
+        with sa5: st.button("🔄 Szablon Urlop", use_container_width=True)    
 
     # ZARZĄDZANIE TABELĄ
     st.write("---")
