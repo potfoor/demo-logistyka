@@ -86,17 +86,17 @@ with st.sidebar:
     st.divider()
     menu = sac.tree(items=[
         sac.TreeItem('Dashboard', icon='speedometer2'),
-        sac.TreeItem('Zamówienia', icon='box', children=[
+        sac.TreeItem('Zakupy', icon='box', children=[
             sac.TreeItem('Powiadomienia', icon='bell', tag=sac.Tag(str(len(alerty_uzytkownika)), color='red')),
-            sac.TreeItem('Ticket', icon='ticket-perforated', children=[
+            sac.TreeItem('Zamówienia', icon='ticket-perforated', children=[
                 sac.TreeItem('Moje Dostawy', icon='person-check'),
                 sac.TreeItem('Wszystkie Dostawy', icon='globe'),
                 sac.TreeItem('Sekcja Odpraw', icon='globe'),
-                sac.TreeItem('Sekcja Niezgodności', icon='globe'),
-                sac.TreeItem('Sekcja Przyjęcia', icon='globe'),
+                sac.TreeItem('Sekcja Niezgodności', icon='globe'),               
             ]),
             sac.TreeItem('Awizacja', icon='calendar-event', children=[
                 sac.TreeItem('Moje Awizacje', icon='person-check'),
+                sac.TreeItem('Sekcja Przyjęcia', icon='globe'),
                 sac.TreeItem('Kalendarz', icon='calendar3'),
             ]),
         ]),
