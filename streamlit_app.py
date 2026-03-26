@@ -91,6 +91,9 @@ with st.sidebar:
             sac.TreeItem('Ticket', icon='ticket-perforated', children=[
                 sac.TreeItem('Moje Dostawy', icon='person-check'),
                 sac.TreeItem('Wszystkie Dostawy', icon='globe'),
+                sac.TreeItem('Sekcja Odpraw', icon='globe'),
+                sac.TreeItem('Sekcja Niezgodności', icon='globe'),
+                sac.TreeItem('Sekcja Przyjęcia', icon='globe'),
             ]),
             sac.TreeItem('Awizacja', icon='calendar-event', children=[
                 sac.TreeItem('Moje Awizacje', icon='person-check'),
