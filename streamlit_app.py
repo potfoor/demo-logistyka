@@ -16,62 +16,45 @@ ZALOGOWANY_UZYTKOWNIK = "Jan Kowalski"
 lista_firm = ["Samsung", "Toyota", "Coca-Cola", "Microsoft", "Nestlé", "Apple", "LG", "Sony", "Dell", "IKEA"]
 WSZYSTKIE_KOLUMNY = ["Lp.", "Dostawca", "Nr dostawy", "HWO", "Status", "Zakupy", "Cen", "Waga", "Pal", "Box", "Opiekun", "Aktualizacja"]
 
-# Generowanie bazy danych z alertami
 raw_data = []
 for i, firma in enumerate(lista_firm * 3):
     opiekun = list(osoby_kolory.keys())[i % 3]
-    # Alert cenowy dla co 4 zamówienia Jana Kowalskiego
     alert = "TAK" if (opiekun == ZALOGOWANY_UZYTKOWNIK and i % 4 == 0) else "Nie"
     raw_data.append({
         "Lp.": i + 1, "Dostawca": firma, "Nr dostawy": f"{100+i}/26 🔗",
-        "HWO": "12-03-2026", "Status": "Zamówione", "Cen": alert, 
+        "HWO": "12-03-2026", "Status": "Zamówione", "Cen": alert,
         "Waga": f"{100+i}kg", "Pal": "1", "Box": "4", "Opiekun": opiekun,
         "Aktualizacja": "2026-03-14 22:45", "Zakupy": "OK"
     })
 df = pd.DataFrame(raw_data)
-# Filtrowanie alertów konkretnie pod menu Powiadomienia
 alerty_uzytkownika = df[(df["Opiekun"] == ZALOGOWANY_UZYTKOWNIK) & (df["Cen"] == "TAK")]
 
-# --- 4. CSS (Pełna Karta i Zagęszczenie) ---
+# --- 4. CSS ---
 st.markdown("""
     <style>
     .tag-container { display: flex; flex-wrap: wrap; gap: 4px; padding-bottom: 20px; }
     .tag { padding: 3px 8px; border-radius: 3px; font-size: 10px; color: white; font-weight: bold; text-transform: uppercase; }
     .stButton > button { width: 100%; height: 38px; border-radius: 4px; }
     div[data-testid="column"] button[kind="primary"] { background-color: #ff4b4b !important; color: white !important; }
-    
-    /* POWIĘKSZONA KARTA W POPOVERZE */
     div[data-testid="stPopover"] > button { margin-top: 28px; height: 38px; width: 100%; border: 1px solid #d1d5db; background-color: #f8f9fa; }
-    [data-testid="stPopoverContent"] { width: 600px !important; } 
-    
+    [data-testid="stPopoverContent"] { width: 600px !important; }
     .alert-card { padding: 20px; background-color: #fff5f5; border-left: 6px solid #ff4b4b; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     [data-testid="stHorizontalBlock"] { gap: 10px !important; }
     [data-testid="stDataFrame"] { font-size: 11px; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- HELPERY: AUTOMATYCZNA NUMERACJA DOSTAW PODRZĘDNYCH ---
+# --- HELPERY ---
 def generuj_numer_dostawy_podrzednej(numer_glowny: str, lista_istniejacych: list) -> str:
-    """
-    Generuje kolejny numer dostawy podrzędnej np. "12/2025 cz.1", "12/2025 cz.2" itd.
-    """
     czesci = [t for t in lista_istniejacych if t.startswith(numer_glowny)]
     return f"{numer_glowny} cz.{len(czesci) + 1}"
 
-
-# --- HELPERY: DETEKCJA NOWOŚCI (EAN) ---
 def znajdz_nowe_eany(eany_z_dostawy: list, eany_w_cp: set) -> list:
-    """
-    Zwraca listę EANów z dostawy, których nie ma w systemie CP.
-    """
     return [e for e in eany_z_dostawy if e not in eany_w_cp]
 
-
-# --- INICJALIZACJA SESSION STATE ---
 def init_kreator_state():
     defaults = {
         "step": 0,
-        # Krok 1
         "rodzaj": "Magazyn",
         "cel": "Zapas",
         "dostawca": "",
@@ -79,16 +62,13 @@ def init_kreator_state():
         "status": "Oczekuje",
         "odpowiedzialny": "",
         "uwagi": "",
-        # Krok 2
         "metoda": "Ręczna",
         "tresc_zamowienia": "",
-        # Krok 3 - finalizacja
         "liczba_ticketow": 1,
         "awizacja_glowna": "",
         "eany_input": "",
         "nowe_eany_wykryte": [],
         "nowosci_w_dostawie": False,
-        # Wyszukiwarka
         "szukaj_tytul": "",
         "szukaj_tresc": "",
     }
@@ -96,13 +76,11 @@ def init_kreator_state():
         if k not in st.session_state:
             st.session_state[k] = v
 
-
 # --- 5. MODAL KREATORA (3 KROKI) ---
 @st.dialog("PROCES TWORZENIA NOWEGO ZAMÓWIENIA", width="large")
 def modal_kreatora():
     init_kreator_state()
 
-    # --- Pasek kroków (3 kroki) ---
     sac.steps(
         items=[
             sac.StepsItem(title='Rodzaj / Dostawca / Info'),
@@ -114,41 +92,32 @@ def modal_kreatora():
     )
     st.divider()
 
-    # ──────────────────────────────────────────
-    # KROK 1: Rodzaj + Dostawca + Info
-    # ──────────────────────────────────────────
+    # KROK 1
     if st.session_state.step == 0:
         col_l, col_r = st.columns(2)
 
         with col_l:
             st.subheader("Rodzaj zamówienia")
+            rodzaj_opcje = ["Magazyn", "Pre-order", "Special (?)"]
             st.session_state.rodzaj = st.radio(
                 "Rodzaj:",
-                ["Magazyn", "Pre-order", "Special (?)"],
+                rodzaj_opcje,
                 horizontal=True,
-                index=["Magazyn", "Pre-order", "Special (?)"].index(st.session_state.rodzaj),
+                index=rodzaj_opcje.index(st.session_state.rodzaj),
             )
-
             opcje_celu = ["Bieżące", "Zapas", "Integracja"]
             if st.session_state.rodzaj == "Magazyn":
-                st.session_state.cel = st.selectbox(
-                    "Cel zamówienia:",
-                    opcje_celu,
-                    index=opcje_celu.index(st.session_state.cel) if st.session_state.cel in opcje_celu else 0,
-                )
+                idx_cel = opcje_celu.index(st.session_state.cel) if st.session_state.cel in opcje_celu else 0
+                st.session_state.cel = st.selectbox("Cel zamówienia:", opcje_celu, index=idx_cel)
 
         with col_r:
             st.subheader("Dostawca")
-            st.session_state.dostawca = st.selectbox(
-                "Dostawca:", lista_firm,
-                index=lista_firm.index(st.session_state.dostawca) if st.session_state.dostawca in lista_firm else 0,
-            )
+            idx_firma = lista_firm.index(st.session_state.dostawca) if st.session_state.dostawca in lista_firm else 0
+            st.session_state.dostawca = st.selectbox("Dostawca:", lista_firm, index=idx_firma)
             st.session_state.numer_zamowienia = st.text_input(
                 "Numer zamówienia:",
                 value=st.session_state.numer_zamowienia or f"1/{st.session_state.current_year}",
             )
-
-            # Pre-order: automatyczna numeracja dostaw podrzędnych
             if st.session_state.rodzaj == "Pre-order":
                 st.info(
                     f"Dostawy podrzędne będą numerowane automatycznie: "
@@ -167,29 +136,27 @@ def modal_kreatora():
             )
         with col_o:
             st.session_state.odpowiedzialny = st.text_input(
-                "Odpowiedzialny:", value=st.session_state.odpowiedzialny or ZALOGOWANY_UZYTKOWNIK
+                "Odpowiedzialny:",
+                value=st.session_state.odpowiedzialny or ZALOGOWANY_UZYTKOWNIK,
             )
         st.session_state.uwagi = st.text_area("Uwagi:", value=st.session_state.uwagi)
 
-        # Tworzenie kilku ticketów naraz
         st.divider()
         st.subheader("Liczba ticketów")
         st.session_state.liczba_ticketow = st.number_input(
             "Ile ticketów utworzyć naraz?",
             min_value=1, max_value=20,
             value=st.session_state.liczba_ticketow,
-            help="Pozwala jednorazowo dodać wiele ticketów (np. kilka zamówień od tego samego dostawcy).",
+            help="Pozwala jednorazowo dodać wiele ticketów.",
         )
         if st.session_state.liczba_ticketow > 1:
             st.warning(
                 f"Zostanie utworzonych **{st.session_state.liczba_ticketow}** ticketów "
-                f"z automatyczną numeracją (cz.1 … cz.{st.session_state.liczba_ticketow}).",
+                f"z automatyczną numeracją (cz.1 \u2026 cz.{st.session_state.liczba_ticketow}).",
                 icon="⚠️",
             )
 
-    # ──────────────────────────────────────────
-    # KROK 2: Metoda zamówienia
-    # ──────────────────────────────────────────
+    # KROK 2
     elif st.session_state.step == 1:
         st.subheader("Metoda zamówienia")
         metody = ['Ręczna', 'Formatka', 'Automatyczna']
@@ -199,7 +166,6 @@ def modal_kreatora():
             color='#ff4b4b',
             align='center',
         )
-
         st.divider()
         if st.session_state.metoda == "Ręczna":
             st.session_state.tresc_zamowienia = st.text_area(
@@ -217,12 +183,11 @@ def modal_kreatora():
         elif st.session_state.metoda == "Automatyczna":
             st.info("System wygeneruje zamówienie automatycznie na podstawie stanów magazynowych.")
 
-        # --- Wyszukiwarka EANów / nowości ---
         st.divider()
         st.subheader("🔍 Automatyczna wyszukiwarka nowości (EAN)")
         st.caption(
             "Wklej listę EANów z dostawy (po jednym w linii lub rozdzielone przecinkami). "
-            "System oznaczy te, których nie ma w CP jako **nowości w dostawie**."
+            "System oznaczy te, których nie ma w CP jako nowości w dostawie."
         )
         st.session_state.eany_input = st.text_area(
             "EANy z dostawy:", value=st.session_state.eany_input, height=100
@@ -230,24 +195,20 @@ def modal_kreatora():
         if st.button("🔎 Sprawdź nowości", key="check_eans"):
             raw = st.session_state.eany_input.replace(",", "\n")
             eany_lista = [e.strip() for e in raw.splitlines() if e.strip()]
-            # TODO: podmień `eany_w_cp_set` na rzeczywisty zestaw EANów z bazy CP
-            eany_w_cp_set: set = set()  # <- placeholder
+            eany_w_cp_set: set = set()  # <- placeholder: podłączyć z bazą CP
             nowe = znajdz_nowe_eany(eany_lista, eany_w_cp_set)
             st.session_state.nowe_eany_wykryte = nowe
             if nowe:
                 st.session_state.nowosci_w_dostawie = True
-                st.success(f"Wykryto **{len(nowe)}** nowych EANów — automatycznie zaznaczono „Nowości w dostawie: TAK".")
+                st.success(f"Wykryto **{len(nowe)}** nowych EANow \u2014 automatycznie zaznaczono 'Nowosci w dostawie: TAK'.")
                 st.dataframe({"Nowe EANy (nie ma w CP)": nowe}, use_container_width=True)
             else:
                 st.session_state.nowosci_w_dostawie = False
-                st.info("Brak nowych EANów — wszystkie już istnieją w CP.")
+                st.info("Brak nowych EANów \u2014 wszystkie już istnieją w CP.")
 
-    # ──────────────────────────────────────────
-    # KROK 3: Finalizacja
-    # ──────────────────────────────────────────
+    # KROK 3
     elif st.session_state.step == 2:
         st.subheader("📋 Podsumowanie zamówienia")
-
         col1, col2 = st.columns(2)
         with col1:
             st.write(f"**Rodzaj:** {st.session_state.rodzaj}")
@@ -260,33 +221,24 @@ def modal_kreatora():
             st.write(f"**Status:** {st.session_state.status}")
             st.write(f"**Odpowiedzialny:** {st.session_state.odpowiedzialny}")
             st.write(f"**Liczba ticketów:** {st.session_state.liczba_ticketow}")
-
         if st.session_state.uwagi:
             st.write(f"**Uwagi:** {st.session_state.uwagi}")
-
-        # Nowości w dostawie
         if st.session_state.nowe_eany_wykryte:
             st.info(
-                f"✅ Nowości w dostawie: **TAK** "
-                f"({len(st.session_state.nowe_eany_wykryte)} nowych EANów)",
+                f"Nowości w dostawie: **TAK** ({len(st.session_state.nowe_eany_wykryte)} nowych EANów)",
                 icon="🆕",
             )
 
-        # Awizacja zbiorcza
         st.divider()
         st.subheader("📦 Awizacja")
         st.session_state.awizacja_glowna = st.text_input(
             "Data/termin awizacji (główny ticket):",
             value=st.session_state.awizacja_glowna,
-            help="Jeśli zamówienie ma tickety podrzędne, awizacja zostanie automatycznie skopiowana do wszystkich.",
+            help="Awizacja zostanie automatycznie skopiowana do ticketów podrzędnych.",
         )
         if st.session_state.liczba_ticketow > 1 or st.session_state.rodzaj == "Pre-order":
-            st.caption(
-                "⚡ Awizacja wpisana powyżej zostanie automatycznie propagowana "
-                "do wszystkich powiązanych ticketów podrzędnych."
-            )
+            st.caption("⚡ Awizacja zostanie automatycznie propagowana do wszystkich powiązanych ticketów podrzędnych.")
 
-        # Rozdzielenie ticketu przy częściowej realizacji
         st.divider()
         st.subheader("✂️ Częściowa realizacja (opcjonalnie)")
         rozdziel = st.checkbox(
@@ -294,10 +246,7 @@ def modal_kreatora():
             help="Tworzy dodatkowy ticket podrzędny dla niezrealizowanej części zamówienia.",
         )
         if rozdziel:
-            ilosc_czesciowa = st.number_input(
-                "Ile pozycji/ilość zostaje zrealizowana w tej dostawie?",
-                min_value=1, value=1,
-            )
+            ilosc_czesciowa = st.number_input("Ile pozycji zostaje zrealizowanych?", min_value=1, value=1)
             st.info(
                 f"Ticket zostanie rozdzielony: zrealizowana część ({ilosc_czesciowa} szt.) "
                 f"+ pozostałość jako **{st.session_state.numer_zamowienia} cz.2**.",
@@ -308,9 +257,7 @@ def modal_kreatora():
         st.success("✅ Zamówienie gotowe do dodania!")
         st.write("**Status po dodaniu:** W drodze (Awizacja)")
 
-    # ──────────────────────────────────────────
     # NAWIGACJA
-    # ──────────────────────────────────────────
     st.divider()
     c_nav1, c_nav2 = st.columns(2)
     with c_nav1:
@@ -325,19 +272,12 @@ def modal_kreatora():
                 st.rerun()
         else:
             if st.button("✅ Zakończ i Dodaj", type="primary", key="finish_modal"):
-                # TODO: tutaj logika zapisu ticketu/ticketów do bazy
                 st.session_state.step = 0
                 st.rerun()
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# --- WYSZUKIWARKA (rozszerzona o treść ticketu) ---
-# ──────────────────────────────────────────────────────────────────────────────
+# --- WYSZUKIWARKA ---
 def panel_wyszukiwarki(lista_ticketow: list) -> list:
-    """
-    lista_ticketow: lista słowników z kluczami 'tytul', 'tresc', 'zalacznik_tekst' (opcjonalny)
-    Zwraca przefiltrowaną listę.
-    """
     st.subheader("🔍 Wyszukiwarka ticketów")
     col_a, col_b = st.columns(2)
     with col_a:
@@ -348,7 +288,6 @@ def panel_wyszukiwarki(lista_ticketow: list) -> list:
             key="szukaj_tresc",
             help="Przeszukuje treść zamówienia oraz tekst wyodrębnionych załączników.",
         )
-
     wyniki = lista_ticketow
     if szukaj_tytul:
         q = szukaj_tytul.lower()
@@ -375,7 +314,7 @@ with st.sidebar:
                 sac.TreeItem('Moje Dostawy', icon='person-check'),
                 sac.TreeItem('Wszystkie Dostawy', icon='globe'),
                 sac.TreeItem('Sekcja Odpraw', icon='globe'),
-                sac.TreeItem('Sekcja Niezgodności', icon='globe'),               
+                sac.TreeItem('Sekcja Niezgodności', icon='globe'),
             ]),
             sac.TreeItem('Awizacja', icon='calendar-event', children=[
                 sac.TreeItem('Moje Awizacje', icon='person-check'),
@@ -406,9 +345,8 @@ if menu == 'Powiadomienia':
         st.info("Brak aktywnych powiadomień.")
 
 else:
-    # FILTROWANIE DANYCH
     df_v = df.copy()
-    if menu in ['Moje Dostawy', 'Moje Awizacje']: 
+    if menu in ['Moje Dostawy', 'Moje Awizacje']:
         df_v = df[df["Opiekun"] == ZALOGOWANY_UZYTKOWNIK]
 
     st.write("**Aktywni Dostawcy:**")
@@ -420,7 +358,7 @@ else:
     st.header("🔍 Wyszukiwanie")
     with st.container(border=True):
         c1, c2, c3 = st.columns([3, 1, 3])
-        with c1: 
+        with c1:
             d_sel = st.selectbox("Dostawca:", ["Wszyscy"] + list(df_v["Dostawca"].unique()))
         with c2:
             with st.popover("📇 KARTA"):
@@ -438,33 +376,33 @@ else:
                         st.text_input("Opiekun (Firma):", "Aneta Nowak")
                         st.text_input("Tel:", "+48 123 456 789")
                         st.text_input("Email Price List:", "ceny@dostawca.pl")
-                    
                     st.divider()
                     st.write("**📋 Warunki i Logistyka**")
                     col_k3, col_k4 = st.columns(2)
                     col_k3.selectbox("Dzień dostawy:", ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"])
                     col_k4.text_input("Minimum logistyczne:", "1500 PLN")
                     st.text_area("Notatki operacyjne:", "Zawsze dzwonić przed awizacją.")
-                    if st.button("💾 Zapisz zmiany w karcie"): st.success("Zapisano dane kontrahenta!")
-                else: 
+                    if st.button("💾 Zapisz zmiany w karcie"):
+                        st.success("Zapisano dane kontrahenta!")
+                else:
                     st.warning("Wybierz dostawcę z listy obok, aby zobaczyć jego kartę.")
         with c3:
             default_ops = [] if menu == 'Wszystkie Dostawy' else [ZALOGOWANY_UZYTKOWNIK]
             o_sel = st.multiselect("Odpowiedzialny:", list(osoby_kolory.keys()), default=default_ops)
 
         st.columns(4)[0].text_input("Ticket:", placeholder="Nr...")
-        
+
         st.divider()
         st.write("**Akcje Szybkie:**")
         sa1, sa2, sa3, sa4, sa5, _ = st.columns([1.2, 1.2, 1.2, 1.2, 1.4, 4])
         with sa1:
-            if st.button("✨ Nowa dostawa", type="primary", use_container_width=True): modal_kreatora()
+            if st.button("✨ Nowa dostawa", type="primary", use_container_width=True):
+                modal_kreatora()
         with sa2: st.button("➕ Dodaj Dostawcę", use_container_width=True)
         with sa3: st.button("🚛 Dodaj Przewoźnika", use_container_width=True)
         with sa4: st.button("🔄 Zamówienia Cykliczne", use_container_width=True)
-        with sa5: st.button("🔄 Szablon Urlop", use_container_width=True)    
+        with sa5: st.button("🔄 Szablon Urlop", use_container_width=True)
 
-    # ZARZĄDZANIE TABELĄ
     st.write("---")
     st.subheader("📊 Zarządzanie Tabelą")
     with st.container(border=True):
@@ -472,15 +410,17 @@ else:
         with cm1:
             def_cols = WSZYSTKIE_KOLUMNY if menu == 'Wszystkie Dostawy' else ["Lp.", "Dostawca", "Nr dostawy", "Status", "Cen", "Opiekun"]
             selected_cols = st.multiselect("Pokaż kolumny:", WSZYSTKIE_KOLUMNY, default=def_cols)
-        with cm2: 
+        with cm2:
             st.selectbox("Widok:", ["Standardowy", "Pełny"])
 
-    # WYŚWIETLANIE TABELI
     f_df = df_v.copy()
     if d_sel != "Wszyscy": f_df = f_df[f_df["Dostawca"] == d_sel]
     if o_sel: f_df = f_df[f_df["Opiekun"].isin(o_sel)]
 
     st.dataframe(
-        f_df[selected_cols].style.applymap(lambda x: 'background-color: #ffcccc' if x == "TAK" else '', subset=['Cen'] if 'Cen' in selected_cols else []),
+        f_df[selected_cols].style.applymap(
+            lambda x: 'background-color: #ffcccc' if x == "TAK" else '',
+            subset=['Cen'] if 'Cen' in selected_cols else []
+        ),
         use_container_width=True, hide_index=True
     )
