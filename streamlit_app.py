@@ -99,10 +99,10 @@ with st.sidebar:
                 sac.TreeItem('Sekcja Przyjęcia', icon='globe'),
                 sac.TreeItem('Kalendarz', icon='calendar3'),
             ]),
-            sac.TreeItem('Raporty', icon='paper', children=[
-                sac.TreeItem('Raporty Zakupy', icon='person-check'),
-                sac.TreeItem('Raporty Magazyn', icon='globe'),
-                sac.TreeItem('Raporty Awizacja', icon='calendar3'),
+            sac.TreeItem('Raporty', icon='file', children=[
+                sac.TreeItem('Raporty Zakupy', icon='shopping-cart'),
+                sac.TreeItem('Raporty Magazyn', icon='package'),
+                sac.TreeItem('Raporty Awizacja', icon='barcode'),
             ]),
         ]),
     ], label='NAWIGACJA', open_all=True, size='sm')
