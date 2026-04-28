@@ -99,6 +99,11 @@ with st.sidebar:
                 sac.TreeItem('Sekcja Przyjęcia', icon='globe'),
                 sac.TreeItem('Kalendarz', icon='calendar3'),
             ]),
+            sac.TreeItem('Raporty', icon='calendar-event', children=[
+                sac.TreeItem('Raporty Zakupy', icon='person-check'),
+                sac.TreeItem('Raporty Magazyn', icon='globe'),
+                sac.TreeItem('Raporty Awizacja', icon='calendar3'),
+            ]),
         ]),
     ], label='NAWIGACJA', open_all=True, size='sm')
 
