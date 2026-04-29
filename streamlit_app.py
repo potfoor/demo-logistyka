@@ -98,14 +98,14 @@ def modal_kreatora():
 
         with col_l:
             st.subheader("Rodzaj zamówienia")
-            rodzaj_opcje = ["Magazyn", "Pre-order", ]
+            rodzaj_opcje = ["Magazyn", "Pre-order", "Integracja" ]
             st.session_state.rodzaj = st.radio(
                 "Rodzaj:",
                 rodzaj_opcje,
                 horizontal=True,
                 index=rodzaj_opcje.index(st.session_state.rodzaj),
             )
-            opcje_celu = ["Bieżące", "Zapas", "Integracja", "Special (?)"]
+            opcje_celu = ["Bieżące", "Zapas", "Integracja ręczna", "Special"]
             if st.session_state.rodzaj == "Magazyn":
                 idx_cel = opcje_celu.index(st.session_state.cel) if st.session_state.cel in opcje_celu else 0
                 st.session_state.cel = st.selectbox("Cel zamówienia:", opcje_celu, index=idx_cel)
