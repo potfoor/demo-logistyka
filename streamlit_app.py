@@ -59,7 +59,7 @@ def init_kreator_state():
         "cel": "Zapas",
         "dostawca": "",
         "numer_zamowienia": "",
-        "status": "Zamówione",
+        "status": "Oczekuje",
         "odpowiedzialny": "",
         "uwagi": "",
         "metoda": "Ręczna",
